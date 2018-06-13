@@ -1,0 +1,81 @@
+<HTMLQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd">
+    <HTMLContent><![CDATA[
+ <!DOCTYPE html>                                                       
+    <html>
+        <head>
+            <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/> 
+            <script type='text/javascript' src='https://s3.amazonaws.com/mturk-public/externalHIT_v1.js'></script>
+            <style>
+            div {
+                background-color: powderblue;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+            </style>
+        </head>
+        <body> 
+            <form name='mturk_form' method='post' id='mturk_form' action='https://www.mturk.com/mturk/externalSubmit'><input type='hidden' value='' name='assignmentId' id='assignmentId'/>
+
+                <div>
+                    Instructions: You will see an initial sentence followed by a set of followup statements. Please choose the option from the dropdown that best describes the possibility of each followup statement. If you think a followup statement is invalid, check one of the boxes.
+                    <h4>Initial sentence: There is a ADJECTIVE WHOLE.</h4>
+                </div>
+                <br />
+
+                <div>
+                    The following statement is 
+                    <select name="possibility" required>
+                        <option value="">Make a selection</option>
+                        <option value='guaranteed'>guaranteed to be true</option>
+                        <option value='likely'>likely to be true</option>
+                        <option value='plausible'>plausible to be true</option>
+                        <option value='unrelated'>unrelated</option>
+                        <option value='impossible'>impossible to be true</option>
+                    </select> 
+                    given the context of the initial sentence.
+                    <p><strong>The WHOLE's PART is ADJECTIVE.</strong></p>
+                    <input type='checkbox' name="pw-nonsense" /><label>I don't think a "WHOLE" can have a "PART"</label><br />
+                </div>
+                <br />
+                <div>
+                    The following statement is 
+                    <select name="possibility" required>
+                        <option value="">Make a selection</option>
+                        <option value='guaranteed'>guaranteed to be true</option>
+                        <option value='likely'>likely to be true</option>
+                        <option value='plausible'>plausible to be true</option>
+                        <option value='unrelated'>unrelated</option>
+                        <option value='impossible'>impossible to be true</option>
+                    </select> 
+                    given the context of the initial sentence.
+                    <p><strong>The WHOLE's PART is ADJECTIVE.</strong></p>
+                    <input type='checkbox' name="pw-nonsense" /><label>I don't think a "WHOLE" can have a "PART"</label><br />
+                </div>
+                <br />
+                <div>
+                    The following statement is 
+                    <select name="possibility" required>
+                        <option value="">Make a selection</option>
+                        <option value='guaranteed'>guaranteed to be true</option>
+                        <option value='likely'>likely to be true</option>
+                        <option value='plausible'>plausible to be true</option>
+                        <option value='unrelated'>unrelated</option>
+                        <option value='impossible'>impossible to be true</option>
+                    </select> 
+                    given the context of the initial sentence.
+                    <p><strong>The WHOLE's PART is ADJECTIVE.</strong></p>
+                    <input type='checkbox' name="pw-nonsense" /><label>I don't think a "WHOLE" can have a "PART"</label><br />
+                </div>
+                <p><input type='submit' id='submitButton' value='Submit' /></p></form> 
+
+            <script language='Javascript'>turkSetAssignmentID();</script>
+
+        </body>
+    </html>
+   ]]>
+
+    </HTMLContent>
+
+    <FrameHeight>800</FrameHeight>
+
+</HTMLQuestion>
