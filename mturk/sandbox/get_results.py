@@ -1,6 +1,7 @@
 import boto3
 import csv
 import xmltodict
+from collections import defaultdict
 
 MTURK_SANDBOX = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
 
@@ -18,56 +19,59 @@ mturk = boto3.client('mturk',
                      endpoint_url = MTURK_SANDBOX
                      )
 
-def get_response(response, q_id, free_text):
-    if q_id == 'possibility':
-        if response is None:
-            response = free_text
-    elif q_id == 'pw-nonsense':
-        response = 'pw-nonsense'
-    elif q_id == 'pjj-nonsense':
-        if response == 'pw-nonsense':
-            response = 'both-nonsense'
-        else:
-            response = 'pjj-nonsense'
-    return response
+def update_responses(responses, q_id, free_text):
+    ix = int(q_id[-1]) - 1
+    if q_id.startswith('response'):
+        if responses[ix] is None:
+            responses[ix] = free_text
+    elif q_id.startswith('wjj-nonsense'):
+        responses[ix] = 'wjj-nonsense'
+        if responses[ix] == 'pjj-nonsense':
+            responses[ix] = 'both-nonsense'
+    elif q_id.startswith('pjj-nonsense'):
+        responses[ix] = 'pjj-nonsense'
+        if responses[ix] == 'wjj-nonsense':
+            responses[ix] = 'both-nonsense'
+    return responses
 
-# Use the hit_id previously created
-with open('hit_batches/batch_1528749931259.csv') as f:
-    with open('hit_results/batch_1528749931259.csv', 'w') as of:
+with open('hit_batches/batch_1529089597996.csv') as f:
+    with open('hit_results/batch_1529089597996.csv', 'w') as of:
         w = csv.writer(of)
         r = csv.reader(f)
         header = next(r)
         header.extend(['result1', 'result2', 'result3'])
         w.writerow(header)
+        hit_ids = set()
         for row in r:
-            to_write = row[:5]
-            hit_id = row[1]
+            hit_id = row[2]
+            jjs = row[-1].split(';')
             print(hit_id)
-
-            # We are only publishing this task to one Worker
-            # So we will get back an array with one item if it has been completed
 
             worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=['Submitted'])
 
-            responses = []
+            responses = defaultdict(set)
             if worker_results['NumResults'] > 0:
+                import pdb; pdb.set_trace()
                 for assignment in worker_results['Assignments']:
-                    response = None
+                    assgn_responses = [None] * len(jjs)
                     xml_doc = xmltodict.parse(assignment['Answer'])
-                    #import pdb; pdb.set_trace()
 
                     if type(xml_doc['QuestionFormAnswers']['Answer']) is list:
                         # Multiple fields in HIT layout
-                        for answer_field in xml_doc['QuestionFormAnswers']['Answer']:
-                            response = get_response(response, answer_field['QuestionIdentifier'], answer_field['FreeText'])
+                        for i,answer_field in enumerate(xml_doc['QuestionFormAnswers']['Answer']):
+                            assgn_responses = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
                     else:
                         # One field found in HIT layout
                         answer_field = xml_doc['QuestionFormAnswers']['Answer']
-                        response = get_response(response, answer_field['QuestionIdentifier'], answer_field['FreeText'])
-                    responses.append(response)
+                        assgn_responses = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
+                for jj, res in zip(jjs, assgn_responses):
+                    responses[jj].add(res)
             else:
                 print("No results ready yet")
+                continue
 
-            to_write.extend(responses)
-            w.writerow(to_write)
+            for jj, res in zip(jjs, responses):
+                to_write = row[:5]
+                to_write.extend([jj, *responses[jj]])
+                w.writerow(to_write)
             print()

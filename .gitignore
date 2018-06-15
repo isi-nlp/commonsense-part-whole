@@ -106,3 +106,7 @@ venv.bak/
 #other dirs
 data/
 figs/
+
+#HIT sandbox data
+mturk/sandbox/hit_batches
+mturk/sandbox/hit_results

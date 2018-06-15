@@ -8,11 +8,11 @@ import operator
 print("reading adjective lists")
 jjs_to_exclude = set()
 for typ in ['descriptive', 'attributive']:
-    with open('/home/jamesm/commonsense/data/adjectives/non-%s-jj.txt' % typ) as f:
+    with open('/home/jamesm/commonsense-part-whole/data/adjectives/non-%s-jj.txt' % typ) as f:
         for line in f:
             jjs_to_exclude.add(line.strip())
 
-with open('/home/jamesm/commonsense/data/adjectives/non-descript-jj-james.txt') as f:
+with open('/home/jamesm/commonsense-part-whole/data/adjectives/non-descript-jj-james.txt') as f:
     for line in f:
         jjs_to_exclude.add(line.strip())
 
@@ -40,8 +40,10 @@ for img in attrs:
  
 print("reading part-whole candidates")
 whole2parts = defaultdict(set)
-with open('../data/nouns/sample_50.tsv') as f:
+with open('../data/nouns/vg_has_nouns_min_3_details.tsv') as f:
     r = csv.reader(f, delimiter='\t')
+    #header
+    next(r)
     for row in r:
         whole2parts[row[0]].add(row[1])
 
@@ -49,7 +51,7 @@ with open('../data/nouns/sample_50.tsv') as f:
 wholes = set(whole2parts.keys()).intersection(set(noun2jjs.keys()))
 
 #take top 5 adjectives for the whole
-with open('../data/adjectives/sample_50_pws.csv', 'w') as of:
+with open('../data/adjectives/vg_only_mturk_candidates.csv', 'w') as of:
     w = csv.writer(of)
     for whole in wholes:
         #take top five adjectives from n-grams
@@ -61,7 +63,8 @@ with open('../data/adjectives/sample_50_pws.csv', 'w') as of:
             for part in whole2parts[whole]:
                 #optionally filter to adjectives that have been applied to the part (in n-grams) as well
                 if part in noun2jjs and jj in noun2jjs[part]:
-                    w.writerow([whole, part, jj])
+                    if part != whole and '.' not in whole and '.' not in part:
+                        w.writerow([whole, part, jj])
 
 #put jjs in vg_imgs directories
 #for whole in wholes:

@@ -105,11 +105,11 @@ def get_frequent_concrete_nouns(ngram_source, lem, min_count=10000):
     print("frequency and concreteness filtering from google unigrams...")
     unigram_concrete = set()
     if ngram_source == 'full':
-        nc_file = '/home/jamesm/commonsense/data/ngrams/unigrams/noun_counts.csv'
+        nc_file = '/home/jamesm/commonsense-part-whole/data/ngrams/unigrams/noun_counts.csv'
     elif ngram_source == 'fiction':
-        nc_file = '/home/jamesm/commonsense/data/ngrams/unigrams_fic/noun_counts.csv'
+        nc_file = '/home/jamesm/commonsense-part-whole/data/ngrams/unigrams_fic/noun_counts.csv'
     elif ngram_source == 'fiction-1950':
-        nc_file = '/home/jamesm/commonsense/data/ngrams/unigrams_fic/noun_counts_1950.csv'
+        nc_file = '/home/jamesm/commonsense-part-whole/data/ngrams/unigrams_fic/noun_counts_1950.csv'
     print("reading from %s" % nc_file)
     with open(nc_file) as f:
         r = csv.reader(f)
@@ -186,6 +186,13 @@ def get_part_whole_relations_cn(lem):
             if len(whole.split()) == 1 and len(part.split()) == 1 and part not in locations and whole not in locations:
                 whole2parts_cn[whole].add(part)
     return whole2parts_cn
+
+def get_part_whole_relations_wd(lem):
+    whole2parts = defaultdict(set)
+    with open('../data/nouns/wikidata-pws.csv') as f:
+        for row in csv.reader(f):
+            whole2parts[row[0]].add(row[1])
+    return whole2parts
 
 def get_part_whole_relations_pwkb(lem):
     # whole-ness filtering: compare with pwkb candidates. Include only PWKB entries with score 1, others are mostly junk
@@ -279,12 +286,13 @@ def filter_parts(whole2parts):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('pw_source', choices=['vg', 'pwkb', 'cn', 'all', 'no-vg', 'no-pwkb'], help='Data source for part-whole relations')
+    parser.add_argument('pw_source', choices=['vg', 'pwkb', 'cn', 'wd', 'all', 'no-vg', 'no-pwkb'], help='Data source for part-whole relations')
     parser.add_argument('ngram_source', choices=['full', 'fiction', 'fiction-1950'], help='Data source for google unigram frequencies')
     parser.add_argument('--concreteness', type=float, required=False, default=3.5, help="cutoff lower bound for brysbaert's concreteness judgment (default: 3.5)")
     parser.add_argument('--noun-freq', type=int, required=False, default=10000, dest='noun_freq', help="minimum unigram noun frequency from google n-grams")
     parser.add_argument('--vg-freq', type=int, required=False, default=1, dest='vg_freq', help="minimum visual genome image frequency for parts (unimplemented)")
     parser.add_argument('--union-concrete', dest='union_concrete', const=True, required=False, action="store_const", help="flag to union brysbaert with google ngrams rather than intersect")
+    parser.add_argument('--filter', dest='filter', const=True, required=False, action="store_const", help="flag to do concreteness/frequency filtering")
     args = parser.parse_args()
 
     # First, get frequent, concrete nouns using google n-grams and wordnet
@@ -295,7 +303,7 @@ if __name__ == "__main__":
     # Augment (or filter) with most concrete of brysbaert's concrete lemmas from turkers
     concs = {}
     conc_sds = {}                                                 
-    with open('/home/jamesm/commonsense/data/brysbaert/Concreteness_ratings_Brysbaert_et_al_BRM.txt') as f:                                                                                           
+    with open('/home/jamesm/commonsense-part-whole/data/brysbaert/Concreteness_ratings_Brysbaert_et_al_BRM.txt') as f:                                                                                           
         r = csv.reader(f, delimiter='\t')
         next(r)                                                                                                                                                                                       
         for row in r:             
@@ -316,6 +324,8 @@ if __name__ == "__main__":
         whole2parts = get_part_whole_relations_pwkb(lem)
     elif args.pw_source == 'cn':
         whole2parts = get_part_whole_relations_cn(lem)
+    elif args.pw_source == 'wd':
+        whole2parts = get_part_whole_relations_wd(lem)
     elif args.pw_source == 'no-pwkb':
         whole2parts_vg, vg_stats = get_part_whole_relations_vg(lem, args.vg_freq)
         whole2parts_cn = get_part_whole_relations_cn(lem)
@@ -347,6 +357,7 @@ if __name__ == "__main__":
     elif args.pw_source == 'no-vg':
         whole2parts_pwkb = get_part_whole_relations_pwkb(lem)
         whole2parts_cn = get_part_whole_relations_cn(lem)
+        whole2parts_wd = get_part_whole_relations_wd(lem)
 
         # Create set of concrete *whole* nouns
         #unigram_concrete_whole = unigram_concrete.intersection(set(whole2parts_cn.keys()))
@@ -363,8 +374,8 @@ if __name__ == "__main__":
         #                                   for noun,partset in whole2parts_vg.items() if noun in vg_sanity})
 
         #combine by union
-        whole2parts = defaultdict(set, {whole: whole2parts_pwkb[whole].union(whole2parts_cn[whole]) \
-                                        for whole in set(whole2parts_pwkb.keys()).union(set(whole2parts_cn.keys()))})
+        whole2parts = defaultdict(set, {whole: whole2parts_pwkb[whole].union(whole2parts_cn[whole]).union(whole2parts_wd[whole]) \
+                                        for whole in set(whole2parts_pwkb.keys()).union(set(whole2parts_cn.keys())).union(set(whole2parts_wd.keys()))})
         wp2source = defaultdict(set)
         for whole, parts in whole2parts.items():
             for part in parts:
@@ -372,47 +383,60 @@ if __name__ == "__main__":
                     wp2source[(whole, part)].add('pwkb')
                 if part in whole2parts_cn[whole]:
                     wp2source[(whole, part)].add('cn')
+                if part in whole2parts_wd[whole]:
+                    wp2source[(whole, part)].add('wd')
 
 
     elif args.pw_source == 'all':
-        whole2parts_vg, vg_stats = get_part_whole_relations_vg(lem, args.vg_freq)
+        #whole2parts_vg, vg_stats = get_part_whole_relations_vg(lem, args.vg_freq)
         whole2parts_pwkb = get_part_whole_relations_pwkb(lem)
         whole2parts_cn = get_part_whole_relations_cn(lem)
+        whole2parts_wd = get_part_whole_relations_wd(lem)
         #combine by union
-        whole2parts = defaultdict(set, {whole: whole2parts_vg[whole].union(whole2parts_pwkb[whole]).union(whole2parts_cn[whole]) \
-                                        for whole in set(whole2parts_vg.keys()).union(set(whole2parts_pwkb.keys())).union(set(whole2parts_cn.keys()))})
+        whole2parts = defaultdict(set, {whole: whole2parts_wd[whole]\
+                                               .union(whole2parts_pwkb[whole])\
+                                               .union(whole2parts_cn[whole])\
+                                               #.union(whole2parts_vg[whole]) \
+                                        for whole in set(whole2parts_wd.keys())\
+                                                     .union(set(whole2parts_pwkb.keys()))\
+                                                     .union(set(whole2parts_cn.keys()))\
+                                                     #.union(set(whole2parts_vg.keys()))
+                                                     })
         wp2source = defaultdict(set)
         for whole, parts in whole2parts.items():
             for part in parts:
-                if part in whole2parts_vg[whole]:
-                    wp2source[(whole, part)].add('vg')
+                #if part in whole2parts_vg[whole]:
+                #    wp2source[(whole, part)].add('vg')
                 if part in whole2parts_pwkb[whole]:
                     wp2source[(whole, part)].add('pwkb')
                 if part in whole2parts_cn[whole]:
                     wp2source[(whole, part)].add('cn')
+                if part in whole2parts_wd[whole]:
+                    wp2source[(whole, part)].add('wd')
 
-    # Create set of concrete *whole* nouns
-    unigram_concrete_whole = unigram_concrete.intersection(set(whole2parts.keys()))
-    # Create set of concrete *part* nouns
-    parts = set()
-    for noun, partset in whole2parts.items():
-        parts.update(set([*partset]))
-    unigram_concrete_part = unigram_concrete.intersection(parts)
+    if args.filter:
+        # Create set of concrete *whole* nouns
+        unigram_concrete_whole = unigram_concrete.intersection(set(whole2parts.keys()))
+        # Create set of concrete *part* nouns
+        parts = set()
+        for noun, partset in whole2parts.items():
+            parts.update(set([*partset]))
+        unigram_concrete_part = unigram_concrete.intersection(parts)
 
-    # filter down both wholes and parts in lookup
-    whole2parts = {noun: set([part for part in partset if part in unigram_concrete_part and part != noun]) for noun,partset in whole2parts.items() if noun in unigram_concrete_whole}
+        # filter down both wholes and parts in lookup
+        whole2parts = {noun: set([part for part in partset if part in unigram_concrete_part and part != noun]) for noun,partset in whole2parts.items() if noun in unigram_concrete_whole}
 
     #write!
     print("TOTAL WHOLES: %d" % len(set(whole2parts.keys())))
     print("TOTAL PARTS: %d" % sum([len(parts) for parts in whole2parts.values()]))
     suffix = "_union" if args.union_concrete else ""
-    with open('/home/jamesm/commonsense/data/nouns/part_whole_candidates_%s_%s_%d%s_stats.csv' % (args.ngram_source, args.pw_source, args.noun_freq, suffix), 'w') as of:
+    with open('/home/jamesm/commonsense-part-whole/data/nouns/non_vg_agree_filtered.csv', 'w') as of:# % (args.ngram_source, args.pw_source, args.noun_freq, suffix), 'w') as of:
         w = csv.writer(of)
         w.writerow(['whole', 'part', 'sources', 'vg_whole', 'vg_part', 'vg_part_whole'])
         for whole, parts in whole2parts.items():
             for part in parts:
                 source = wp2source[(whole, part)]
-                if whole in vg_stats[0] and part in vg_stats[1] and (whole, part) in vg_stats[2]:
-                    w.writerow([whole, part, ';'.join(source), vg_stats[0][whole], vg_stats[1][part], vg_stats[2][(whole, part)]])
-                else:
-                    w.writerow([whole, part, ';'.join(source)])
+                #if whole in vg_stats[0] and part in vg_stats[1] and (whole, part) in vg_stats[2]:
+                #    w.writerow([whole, part, ';'.join(source), vg_stats[0][whole], vg_stats[1][part], vg_stats[2][(whole, part)]])
+                #else:
+                w.writerow([whole, part, ';'.join(source)])
