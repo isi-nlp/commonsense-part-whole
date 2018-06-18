@@ -1,9 +1,19 @@
 """
     Extract candidate adjectives from google dependency n-grams, visual genome attributes. Ignore jonathan's lists
 """
+import argparse
 import csv, json
 from collections import Counter, defaultdict, OrderedDict
 import operator
+
+from nltk.corpus import wordnet as wn
+from tqdm import tqdm
+
+parser = argparse.ArgumentParser()
+parser.add_argument('pw_dataset', type=str, help="filename of part-whole candidates")
+parser.add_argument('out_file', type=str, help="filename to write to")
+parser.add_argument('--non-visual', const=True, action="store_const", required=False, dest='non_visual', help="flag to get non-visual adjectives")
+args = parser.parse_args()
 
 print("reading adjective lists")
 jjs_to_exclude = set()
@@ -40,31 +50,58 @@ for img in attrs:
  
 print("reading part-whole candidates")
 whole2parts = defaultdict(set)
-with open('../data/nouns/vg_has_nouns_min_3_details.tsv') as f:
-    r = csv.reader(f, delimiter='\t')
+with open('../data/nouns/%s' % args.pw_dataset) as f:
+    delim = ',' if args.non_visual else '\t'
+    r = csv.reader(f, delimiter=delim)
     #header
     next(r)
     for row in r:
         whole2parts[row[0]].add(row[1])
 
-#intersect b/c some wholes might not have any adjectives
-wholes = set(whole2parts.keys()).intersection(set(noun2jjs.keys()))
+wholes = set(whole2parts.keys())
+
+if args.non_visual:
+    triples = set([tuple(row) for row in csv.reader(open('../data/adjectives/vg_only_mturk_candidates_mwe.csv'))])
 
 #take top 5 adjectives for the whole
-with open('../data/adjectives/vg_only_mturk_candidates.csv', 'w') as of:
+with open('../data/adjectives/%s' % args.out_file, 'w') as of:
     w = csv.writer(of)
-    for whole in wholes:
+    for whole in tqdm(wholes):
+
+        jjs = []
         #take top five adjectives from n-grams
-        jjs = list(noun2jjs[whole])[:5]
+        if whole in noun2jjs:
+            jjs.extend(list(noun2jjs[whole])[:5])
+            whole_for_adj = whole
+        #for multi-word nouns, try taking adjectives for the second noun
+        elif ' ' in whole and whole.split(' ')[1] in noun2jjs_vg:
+            jjs.extend(list(noun2jjs[whole.split(' ')[1]])[:5])
+            whole_for_adj = whole.split(' ')[1]
+
         #optionally take top five adjectives from VG as well
         if whole in noun2jjs_vg:
             jjs.extend(list(noun2jjs_vg[whole])[:5])
+        elif ' ' in whole and whole.split(' ')[1] in noun2jjs_vg:
+            jjs.extend(list(noun2jjs_vg[whole.split(' ')[1]])[:5])
+
+        if len(jjs) == 0:
+            print("whole had no jj's found: %s" % whole)
+            continue
+
         for jj in jjs:
-            for part in whole2parts[whole]:
-                #optionally filter to adjectives that have been applied to the part (in n-grams) as well
-                if part in noun2jjs and jj in noun2jjs[part]:
-                    if part != whole and '.' not in whole and '.' not in part:
-                        w.writerow([whole, part, jj])
+            #filter jjs where the jj-whole forms a common expression (in wordnet) (e.g. dutch oven, sick bed)
+            if len(wn.synsets('_'.join([jj, whole_for_adj]))) == 0 and len(wn.synsets(''.join([jj, whole_for_adj]))) == 0:
+                for part in whole2parts[whole]:
+                    if (not args.non_visual) or ((whole, part, jj) not in triples):
+                        #optionally filter to adjectives that have been applied to the part (in n-grams) as well
+                        if part in noun2jjs:
+                            if jj in noun2jjs[part]:
+                                if part != whole and '.' not in whole and '.' not in part:
+                                    w.writerow([whole, part, jj])
+                        elif ' ' in part and part.split(' ')[1] in noun2jjs:
+                            if jj in noun2jjs[part.split(' ')[1]]:
+                                if part != whole and '.' not in whole and '.' not in part:
+                                    w.writerow([whole, part, jj])
 
 #put jjs in vg_imgs directories
 #for whole in wholes:

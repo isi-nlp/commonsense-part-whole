@@ -8,6 +8,8 @@ import operator
 import random
 import re
 
+from nltk.corpus import wordnet as wn
+from nltk.stem.wordnet import WordNetLemmatizer
 import numpy as np
 import spacy
 from spacy.tokens import Doc
@@ -85,14 +87,36 @@ def get_part_to_filtered_lookup(vgrels):
             cur_filt = t.text if t.pos_ == 'NOUN' else None
     return parts, part2filtered
 
+def get_part_to_filtered_lookup_wordnet(vgrels):
+    print("making part to filtered lookup with wordnet")
+    print("filtering all part nouns")
+    parts = set()
+    for img in tqdm(vgrels):
+        for rel in img['relationships']:
+            if rel['predicate'] in ['has', 'has a', 'have', 'has an']:
+                obj = get_name_and_id(rel, 'object')[0]
+                subj = get_name_and_id(rel, 'subject')[0]
+                parts.add()
+                parts.add()
+    part2filtered = {}
+    for part in parts:
+        if ' ' in part:
+            if len(wn.synsets(part)) > 0:
+                part2filtered[part]
+        else:
+            part2filtered[part] = part
+
 if __name__ == "__main__":
     print("loading visual genome relationships...")
     vgrels = json.load(open('../data/visualgenome/relationships.json'))
     nlp = spacy.load('en_core_web_sm', parser=False, tagger=True, entity=False)
     nlp.tokenizer = WhitespaceTokenizer(nlp.vocab)
+    descriptors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black', 'white', 'gray', 'grey', 'brown', 'pink', 'front', 'back', 'left', 'right']
+    has_descriptor = lambda name: any([desc in name for desc in descriptors])
+    lem = WordNetLemmatizer()
 
     BboxInfo = namedtuple('BboxInfo', ['id', 'px', 'py', 'pw', 'ph', 'wx', 'wy', 'ww', 'wh'])
-    with open('../data/nouns/vg_has_nouns_min_3_details.tsv', 'w') as of:
+    with open('../data/nouns/vg_min_3.tsv', 'w') as of:
         w = csv.writer(of, delimiter='\t')
         w.writerow(['subject', 'object', 'num_whole', 'num_part', 'num_pw', 'img1', 'img2', 'img3'])
         #how many total instances of subj has obj
@@ -102,7 +126,7 @@ if __name__ == "__main__":
         #how many times each noun appears at all (not just in a 'has' relationship)
         abs_noun_counts = Counter()
 
-        parts, part2filtered = get_part_to_filtered_lookup(vgrels)
+        #parts, part2filtered = get_part_to_filtered_lookup(vgrels)
         
         print("extracting parts and wholes from 'has' relations...")
         for img in tqdm(vgrels):
@@ -116,13 +140,58 @@ if __name__ == "__main__":
                 obj_name, obj_id = get_name_and_id(rel, 'object')
 
                 #filter names
-                if obj_name in part2filtered:
-                    obj_name = part2filtered[obj_name]
-                if subj_name in part2filtered:
-                    subj_name = part2filtered[subj_name]
+                #if obj_name in part2filtered:
+                #    obj_name = part2filtered[obj_name]
+                #if subj_name in part2filtered:
+                #    subj_name = part2filtered[subj_name]
 
-                if subj_name is None or obj_name is None:
+                if obj_name is None or subj_name is None:
                     continue
+                #other degenerate cases
+                if '.' in obj_name or '.' in subj_name:
+                    continue
+                #if MWE
+                if ' ' in obj_name:
+                    #check if it's a common MWE in wordnet
+                    if len(wn.synsets(obj_name)) == 0:
+                        #also check without the space
+                        if len(wn.synsets(''.join(obj_name.split()))) == 0:
+                            if has_descriptor(obj_name):
+                                words = obj_name.split()
+                                if len(words) == 2:
+                                    obj_name = words[-1]
+                                else:
+                                    #not dealing with this nonsense
+                                    continue
+                            else:
+                                continue
+                        else:
+                            #if it's in wordnet only without the space, fix the name
+                            obj_name = ''.join(obj_name.split())
+                #if MWE
+                if ' ' in subj_name:
+                    #check if it's a common MWE in wordnet
+                    if len(wn.synsets(subj_name.replace(' ', '_'))) == 0:
+                        #also check without the space
+                        if len(wn.synsets(''.join(subj_name.split()))) == 0:
+                            if has_descriptor(subj_name):
+                                words = subj_name.split()
+                                if len(words) == 2:
+                                    subj_name = words[-1]
+                                else:
+                                    #not dealing with this nonsense
+                                    continue
+                            else:
+                                continue
+                        else:
+                            #if it's in wordnet only without the space, fix the name
+                            subj_name = ''.join(subj_name.split())
+                #lemmatize
+                old_subj = subj_name
+                subj_name = lem.lemmatize(subj_name.replace(' ', '_'))
+                if old_subj != subj_name and ' ' in old_subj:
+                    print(old_subj, subj_name)
+                obj_name = lem.lemmatize(obj_name.replace(' ', '_'))
 
                 #add counts for subj/obj
                 if subj_id not in img_id2name:
@@ -175,7 +244,7 @@ if __name__ == "__main__":
 
         print("writing part-whole pairs...")
         for (whole, part), images in subj_obj_imgs.items():
-            if len(subj_obj_imgs[(whole, part)]) > 2:
+            if len(subj_obj_imgs[(whole, part)]) >= 3:
                 imgs = list(subj_obj_imgs[(whole, part)])
                 random.shuffle(imgs)
                 sample = [json.dumps(img._asdict()) for img in imgs[:3]]

@@ -104,7 +104,20 @@ venv.bak/
 .mypy_cache/
 
 #other dirs
-data/
+data/adjectives
+data/brysbaert
+data/conceptnet
+data/excel
+data/nell
+data/ngrams
+data/nouns
+data/pwkb
+data/rocstories
+data/subtlexus
+data/visualgenome
+data/wikidata
+data/word2vec
+data/yago
 figs/
 
 #HIT sandbox data

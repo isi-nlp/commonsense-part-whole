@@ -24,18 +24,12 @@ def update_responses(responses, q_id, free_text):
     if q_id.startswith('response'):
         if responses[ix] is None:
             responses[ix] = free_text
-    elif q_id.startswith('wjj-nonsense'):
-        responses[ix] = 'wjj-nonsense'
-        if responses[ix] == 'pjj-nonsense':
-            responses[ix] = 'both-nonsense'
-    elif q_id.startswith('pjj-nonsense'):
-        responses[ix] = 'pjj-nonsense'
-        if responses[ix] == 'wjj-nonsense':
-            responses[ix] = 'both-nonsense'
+    elif 'nonsense' in q_id:
+        responses[ix] = free_text
     return responses
 
-with open('hit_batches/batch_1529089597996.csv') as f:
-    with open('hit_results/batch_1529089597996.csv', 'w') as of:
+with open('hit_batches/batch_1529101298132.csv') as f:
+    with open('hit_results/batch_1529101298132.csv', 'w') as of:
         w = csv.writer(of)
         r = csv.reader(f)
         header = next(r)
@@ -49,9 +43,8 @@ with open('hit_batches/batch_1529089597996.csv') as f:
 
             worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=['Submitted'])
 
-            responses = defaultdict(set)
+            responses = defaultdict(list)
             if worker_results['NumResults'] > 0:
-                import pdb; pdb.set_trace()
                 for assignment in worker_results['Assignments']:
                     assgn_responses = [None] * len(jjs)
                     xml_doc = xmltodict.parse(assignment['Answer'])
@@ -64,8 +57,9 @@ with open('hit_batches/batch_1529089597996.csv') as f:
                         # One field found in HIT layout
                         answer_field = xml_doc['QuestionFormAnswers']['Answer']
                         assgn_responses = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
-                for jj, res in zip(jjs, assgn_responses):
-                    responses[jj].add(res)
+                    for jj, res in zip(jjs, assgn_responses):
+                        responses[jj].append(res)
+                #import pdb; pdb.set_trace()
             else:
                 print("No results ready yet")
                 continue
