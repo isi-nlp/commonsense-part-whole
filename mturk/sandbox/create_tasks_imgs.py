@@ -19,14 +19,19 @@ def reload_template(whole, part):
     #replace images
     pw = '_'.join([whole.replace(' ', '_'), part.replace(' ', '_')])
     #can get filenames from local b/c they were uploaded with the same names
-    new_srcs = [fn for fn in os.listdir('/home/jamesm/commonsense-part-whole/data/nouns/vg_imgs3/%s/' % pw) if fn.endswith('png')]
+    try:
+        new_srcs = [fn for fn in os.listdir('/home/jamesm/commonsense-part-whole/data/nouns/vg_imgs3/%s/' % pw) if fn.endswith('png')]
+    except:
+        print("dir not found: %s" % pw)
+        return None, None, None, None
+
     for i,img in enumerate(form.findChildren('div')[0].findChildren('img')):
         img['src'] = 'https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/%s/%s' % (pw, new_srcs[i])
 
     initial_sentence = soup.new_tag('h4')
     #basic logic for a vs. an
     #det = 'an' if part[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
-    initial_sentence.string = form.findChildren('div')[0].h4.text.replace('WHOLE', lem.lemmatize(whole)).replace('PART', lem.lemmatize(part))
+    initial_sentence.string = form.findChildren('div')[0].h4.text.replace('WHOLE', whole).replace('PART', part)
     form.findChildren('div')[0].h4.replace_with(initial_sentence)
     return prompt, full, soup, form
 
@@ -86,21 +91,25 @@ if __name__ == "__main__":
     #parse examples into (whole, part) : {jjs} lookup
     pw2jjs_raw = defaultdict(set)
     for whole, part, jj in examples:
-        pw2jjs_raw[(whole, part)].add(jj)
+        whole_lem = lem.lemmatize(whole.replace(' ', '_')).replace('_', ' ')
+        part_lem = lem.lemmatize(part.replace(' ', '_')).replace('_', ' ')
+        pw2jjs_raw[(whole_lem, part_lem)].add(jj)
 
     #just lemmatize everything
-    pw2jjs = defaultdict(set)
-    for whole, part, jj in examples:
-        whole_lem = lem.lemmatize(whole)
-        part_lem = lem.lemmatize(part)
-        if (whole_lem, part_lem) in pw2jjs_raw:
-            pw2jjs[(whole_lem, part_lem)].update(pw2jjs_raw[(whole, part)])
-        elif (whole, part_lem) in pw2jjs_raw:
-            pw2jjs[(whole, part_lem)].update(pw2jjs_raw[(whole, part)])
-        elif (whole_lem, part) in pw2jjs_raw:
-            pw2jjs[(whole_lem, part)].update(pw2jjs_raw[(whole, part)])
-        else:
-            pw2jjs[(whole, part)].update(pw2jjs_raw[(whole, part)])
+    #pw2jjs = defaultdict(set)
+    #for whole, part, jj in examples:
+    #    whole_lem = lem.lemmatize(whole.replace(' ', '_'))
+    #    part_lem = lem.lemmatize(part.replace(' ', '_'))
+    #    if (whole_lem, part_lem) in pw2jjs_raw:
+    #        pw2jjs[(whole_lem, part_lem)].update(pw2jjs_raw[(whole, part)])
+    #    elif (whole, part_lem) in pw2jjs_raw:
+    #        pw2jjs[(whole, part_lem)].update(pw2jjs_raw[(whole, part)])
+    #    elif (whole_lem, part) in pw2jjs_raw:
+    #        pw2jjs[(whole_lem, part)].update(pw2jjs_raw[(whole, part)])
+    #    else:
+    #        pw2jjs[(whole, part)].update(pw2jjs_raw[(whole, part)])
+    pw2jjs = pw2jjs_raw
+
     wholes = set([w for w,_ in pw2jjs.keys()])
     parts = set([p for _,p in pw2jjs.keys()])
     num_triples = sum([len(jjs) for jjs in pw2jjs.values()])
@@ -124,6 +133,8 @@ if __name__ == "__main__":
             whole = whole.replace('_', ' ')
             part = part.replace('_', ' ')
             prompt, full, soup, form = reload_template(whole, part)
+            if prompt is None:
+                continue
 
             #TODO: remove this
             if num_ex > args.max_pws:
@@ -135,14 +146,14 @@ if __name__ == "__main__":
                 #replace followup sentence
                 followup_sent = soup.new_tag('h4')
                 div = form.findChildren('div')[num_in_hit+1]
-                followup_sent.string = div.h4.text.replace('WHOLE', lem.lemmatize(whole)).replace('ADJECTIVE', jj)
+                followup_sent.string = div.h4.text.replace('WHOLE', whole).replace('ADJECTIVE', jj)
                 div.h4.replace_with(followup_sent)
 
                 #also replace radio button labels
                 for label in div.findChildren('label'):
                     old_str = label.text
                     new_label = soup.new_tag('label')
-                    new_label.string = old_str.replace('WHOLE', lem.lemmatize(whole)).replace('PART', lem.lemmatize(part)).replace('ADJECTIVE', jj)
+                    new_label.string = old_str.replace('WHOLE', whole).replace('PART', part).replace('ADJECTIVE', jj)
                     label.replace_with(new_label)
 
                 hit_jjs.append(jj)
@@ -150,7 +161,7 @@ if __name__ == "__main__":
 
                 if num_in_hit >= 3:
                     # we have three followups, create the HIT
-                    make_hit(lem.lemmatize(whole), lem.lemmatize(part), hit_jjs, full, str(soup), w, args.title, args.dry_run)
+                    make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                     num_hits += 1
                     num_in_hit = 0
                     hit_jjs = []
@@ -158,6 +169,8 @@ if __name__ == "__main__":
                         print("num hits: %d" % num_hits)
                     #reload the template
                     prompt, full, soup, form = reload_template(whole, part)
+                    if prompt is None:
+                        continue
                 if num_hits >= args.max_hits:
                     break
             if num_hits >= args.max_hits:
@@ -167,7 +180,7 @@ if __name__ == "__main__":
                 #remove extra divs
                 for i in range(3, num_in_hit, -1):
                     form.findChildren('div')[i].decompose()
-                make_hit(lem.lemmatize(whole), lem.lemmatize(part), hit_jjs, full, str(soup), w, args.title, args.dry_run)
+                make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                 num_hits += 1
                 if num_hits % 100 == 0:
                     print("num hits: %d" % num_hits)
