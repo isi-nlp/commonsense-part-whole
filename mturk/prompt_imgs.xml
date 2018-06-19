@@ -1,3 +1,5 @@
+<HTMLQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd">
+    <HTMLContent><![CDATA[
  <!DOCTYPE html>                                                       
     <html>
         <head>
@@ -23,7 +25,7 @@
                 <br />
 
                 <div>
-                    <h4>Now consider a different WHOLE, not pictured. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
+                    <h4>Now consider any WHOLE, not the particular ones pictured. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
                     <input type="radio" name="response1" value="guaranteed" required><label>The PART must also be ADJECTIVE</label><br />
                     <input type="radio" name="response1" value="probably" required><label>The PART is probably ADJECTIVE, but might not be</label><br />
                     <input type="radio" name="response1" value="unrelated" required><label>The PART might be ADJECTIVE, but this has nothing to do with whether the WHOLE is ADJECTIVE</label><br />
@@ -37,7 +39,7 @@
                 </div>
                 <br />
                 <div>
-                    <h4>Now consider a new WHOLE. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
+                    <h4>Now consider any WHOLE, not the particular ones pictured. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
                     <input type="radio" name="response2" value="guaranteed" required><label>The PART must also be ADJECTIVE</label><br />
                     <input type="radio" name="response2" value="probably" required><label>The PART is probably ADJECTIVE, but might not be</label><br />
                     <input type="radio" name="response2" value="unrelated" required><label>The PART might be ADJECTIVE, but this has nothing to do with whether the WHOLE is ADJECTIVE</label><br />
@@ -51,7 +53,7 @@
                 </div>
                 <br />
                 <div>
-                    <h4>Now consider a new WHOLE. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
+                    <h4>Now consider any WHOLE, not the particular ones pictured. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
                     <input type="radio" name="response3" value="guaranteed" required><label>The PART must also be ADJECTIVE</label><br />
                     <input type="radio" name="response3" value="probably" required><label>The PART is probably ADJECTIVE, but might not be</label><br />
                     <input type="radio" name="response3" value="unrelated" required><label>The PART might be ADJECTIVE, but this has nothing to do with whether the WHOLE is ADJECTIVE</label><br />
@@ -69,4 +71,10 @@
 
         </body>
     </html>
+   ]]>
 
+    </HTMLContent>
+
+    <FrameHeight>800</FrameHeight>
+
+</HTMLQuestion>

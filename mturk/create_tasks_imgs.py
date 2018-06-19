@@ -8,7 +8,7 @@ import xmltodict
 
 from collections import defaultdict
 
-MTURK_SANDBOX = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
+MTURK_URL = 'https://mturk-requester.us-east-1.amazonaws.com'
 
 def reload_template(whole, part):
     prompt = open('prompt_imgs.xml').read()
@@ -39,22 +39,22 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
     form = "<![CDATA[\n" + form_str + "\n\n]]>" #dumb hack to make the unparse() output valid
     full['HTMLQuestion']['HTMLContent'] = form
     prompt = html.unescape(xmltodict.unparse(full))
-    title = 'Common sense visual reasoning %s' % title #TODO: remove the number
+    title = 'Common sense visual reasoning %s' % title 
     if not dryrun:
         new_hit = mturk.create_hit(
                                    Title = title,
                                    Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
                                    Keywords = 'images, quick, question answering',
-                                   Reward = '0.01',
+                                   Reward = '0.02',
                                    MaxAssignments = 3,
                                    LifetimeInSeconds = 60*60*24, #1 day
                                    AssignmentDurationInSeconds = 60*5, #5 minutes
                                    AutoApprovalDelayInSeconds = 60*60*4, #4 hours
                                    Question = prompt
         )
-        w.writerow([title, "https://workersandbox.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
+        w.writerow([title, "https://worker.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
     else:
-        w.writerow([title, "https://workersandbox.mturk.com/mturk/preview?groupId=1", '2', whole, part, ';'.join(jjs)])
+        w.writerow([title, "https://worker.mturk.com/mturk/preview?groupId=1", '2', whole, part, ';'.join(jjs)])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument('--max-hits', default=10, dest='max_hits', type=int, help="maximum number of HITs to make")
     parser.add_argument('--max-pws', default=100000, dest='max_pws', type=int, help="maximum number of part-wholes to make HITs from")
     parser.add_argument('--dry-run', dest='dry_run', action='store_const', const=True, help='flag to not actually make HITs')
+    parser.add_argument('--avoid-annotated', dest='avoid_annotated', action='store_const', const=True, help='flag to avoid triples that we already got annotations for')
     args = parser.parse_args()
 
     ############# AWS STUFF #################
@@ -77,7 +78,7 @@ if __name__ == "__main__":
                          aws_access_key_id = iam_access,
                          aws_secret_access_key = iam_secret,
                          region_name='us-east-1',
-                         endpoint_url = MTURK_SANDBOX #TODO: update url
+                         endpoint_url = MTURK_URL
                          )
     s3 = boto3.client('s3',
                       aws_access_key_id = iam_access,
@@ -95,6 +96,16 @@ if __name__ == "__main__":
         whole_lem = lem.lemmatize(whole.replace(' ', '_')).replace('_', ' ')
         part_lem = lem.lemmatize(part.replace(' ', '_')).replace('_', ' ')
         pw2jjs_raw[(whole_lem, part_lem)].add(jj)
+
+    annotated_triples = set()
+    for result in os.listdir('hit_results/'):
+        if result.endswith('.csv'):
+            with open(result) as f:
+                r = csv.reader(f)
+                #header
+                next(r)
+                for row in r:
+                    annotated.triples.add((row[3], row[4], row[5]))
 
     #just lemmatize everything
     #pw2jjs = defaultdict(set)
@@ -116,7 +127,7 @@ if __name__ == "__main__":
     num_triples = sum([len(jjs) for jjs in pw2jjs.values()])
     print("parts: %d, wholes: %d, triples: %d" % (len(parts), len(wholes), num_triples))
 
-    with open('/home/jamesm/commonsense-part-whole/mturk/sandbox/hit_batches/batch_%d.csv' % round(time.time()*1000), 'w') as of:
+    with open('/home/jamesm/commonsense-part-whole/mturk/hit_batches/batch_%d.csv' % round(time.time()*1000), 'w') as of:
         w = csv.writer(of)
         w.writerow(['title', 'url', 'HITId', 'whole', 'part', 'jj'])
 
@@ -137,13 +148,15 @@ if __name__ == "__main__":
             if prompt is None:
                 continue
 
-            #TODO: remove this
             if num_ex > args.max_pws:
                 break
 
             num_in_hit = 0
             hit_jjs = []
             for i, jj in enumerate(jjs):
+                #skip previously annotated triples
+                if (whole, part, jj) in annotated_triples:
+                    continue
                 #replace followup sentence
                 followup_sent = soup.new_tag('h4')
                 div = form.findChildren('div')[num_in_hit+1]
