@@ -1,0 +1,221 @@
+<HTMLQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd">
+    <HTMLContent><![CDATA[
+<!DOCTYPE html>                                                       
+    <html>
+        <head>
+            <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/> 
+            <script type='text/javascript' src='https://s3.amazonaws.com/mturk-public/externalHIT_v1.js'></script>
+            <style>
+            div {
+                background-color: powderblue;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+            </style>
+        </head>
+        <body> 
+            <form name='mturk_form' method='post' id='mturk_form' action='https://www.mturk.com/mturk/externalSubmit'><input type='hidden' value='' name='assignmentId' id='assignmentId'/>
+
+                <div>
+                    <h4>Each of the pictures below has a leg, outlined with a blue box. Notice that each leg also has a knee. The knee is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/leg_knee/2415067.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/leg_knee/2360247.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/leg_knee/2399801.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any leg, not the particular ones pictured. If the leg is bent, which of the following is true?</h4>
+                    <input type="radio" name="response_leg_knee_bent" value="guaranteed" required><label>The knee must also be bent</label><br />
+                    <input type="radio" name="response_leg_knee_bent" value="probably" required><label>The knee is probably bent, but might not be</label><br />
+                    <input type="radio" name="response_leg_knee_bent" value="unrelated" required><label>The knee might be bent, but this has nothing to do with whether the leg is bent</label><br />
+                    <input type="radio" name="response_leg_knee_bent" value="unlikely" required><label>The knee is unlikely to be bent, but might be</label><br />
+                    <input type="radio" name="response_leg_knee_bent" value="impossible" required><label>The knee cannot be bent</label><br />
+                    <input type="radio" name="response_leg_knee_bent" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_leg_knee_bent" value="wjj-nonsense"/><label>I don't know what it means for a leg to be bent</label>
+                    <input type="checkbox" name="word-nonsense_leg_knee_bent" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_leg_knee_bent" value="pw-nonsense"/><label>I don't know what it means for a leg to have a knee</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a boat, outlined with a blue box. Notice that each boat also has a top. The top is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_top/1592541.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_top/2324462.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_top/2397279.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any boat, not the particular ones pictured. If the boat is open, which of the following is true?</h4>
+                    <input type="radio" name="response_boat_top_open" value="guaranteed" required><label>The top must also be open</label><br />
+                    <input type="radio" name="response_boat_top_open" value="probably" required><label>The top is probably open, but might not be</label><br />
+                    <input type="radio" name="response_boat_top_open" value="unrelated" required><label>The top might be open, but this has nothing to do with whether the boat is open</label><br />
+                    <input type="radio" name="response_boat_top_open" value="unlikely" required><label>The top is unlikely to be open, but might be</label><br />
+                    <input type="radio" name="response_boat_top_open" value="impossible" required><label>The top cannot be open</label><br />
+                    <input type="radio" name="response_boat_top_open" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_boat_top_open" value="wjj-nonsense"/><label>I don't know what it means for a boat to be open</label>
+                    <input type="checkbox" name="word-nonsense_boat_top_open" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_boat_top_open" value="pw-nonsense"/><label>I don't know what it means for a boat to have a top</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a woman, outlined with a blue box. Notice that each woman also has a shoulder. The shoulder is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_shoulder/2357319.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_shoulder/2382655.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_shoulder/2417156.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any woman, not the particular ones pictured. If the woman is beautiful, which of the following is true?</h4>
+                    <input type="radio" name="response_woman_shoulder_beautiful" value="guaranteed" required><label>The shoulder must also be beautiful</label><br />
+                    <input type="radio" name="response_woman_shoulder_beautiful" value="probably" required><label>The shoulder is probably beautiful, but might not be</label><br />
+                    <input type="radio" name="response_woman_shoulder_beautiful" value="unrelated" required><label>The shoulder might be beautiful, but this has nothing to do with whether the woman is beautiful</label><br />
+                    <input type="radio" name="response_woman_shoulder_beautiful" value="unlikely" required><label>The shoulder is unlikely to be beautiful, but might be</label><br />
+                    <input type="radio" name="response_woman_shoulder_beautiful" value="impossible" required><label>The shoulder cannot be beautiful</label><br />
+                    <input type="radio" name="response_woman_shoulder_beautiful" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_woman_shoulder_beautiful" value="wjj-nonsense"/><label>I don't know what it means for a woman to be beautiful</label>
+                    <input type="checkbox" name="word-nonsense_woman_shoulder_beautiful" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_woman_shoulder_beautiful" value="pw-nonsense"/><label>I don't know what it means for a woman to have a shoulder</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a jacket, outlined with a blue box. Notice that each jacket also has a collar. The collar is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/jacket_collar/2317491.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/jacket_collar/2366403.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/jacket_collar/2409744.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any jacket, not the particular ones pictured. If the jacket is brown, which of the following is true?</h4>
+                    <input type="radio" name="response_jacket_collar_brown" value="guaranteed" required><label>The collar must also be brown</label><br />
+                    <input type="radio" name="response_jacket_collar_brown" value="probably" required><label>The collar is probably brown, but might not be</label><br />
+                    <input type="radio" name="response_jacket_collar_brown" value="unrelated" required><label>The collar might be brown, but this has nothing to do with whether the jacket is brown</label><br />
+                    <input type="radio" name="response_jacket_collar_brown" value="unlikely" required><label>The collar is unlikely to be brown, but might be</label><br />
+                    <input type="radio" name="response_jacket_collar_brown" value="impossible" required><label>The collar cannot be brown</label><br />
+                    <input type="radio" name="response_jacket_collar_brown" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_jacket_collar_brown" value="wjj-nonsense"/><label>I don't know what it means for a jacket to be brown</label>
+                    <input type="checkbox" name="word-nonsense_jacket_collar_brown" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_jacket_collar_brown" value="pw-nonsense"/><label>I don't know what it means for a jacket to have a collar</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a woman, outlined with a blue box. Notice that each woman also has a chain. The chain is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_chain/2346949.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_chain/2357361.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_chain/2383655.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any woman, not the particular ones pictured. If the woman is beautiful, which of the following is true?</h4>
+                    <input type="radio" name="response_woman_chain_beautiful" value="guaranteed" required><label>The chain must also be beautiful</label><br />
+                    <input type="radio" name="response_woman_chain_beautiful" value="probably" required><label>The chain is probably beautiful, but might not be</label><br />
+                    <input type="radio" name="response_woman_chain_beautiful" value="unrelated" required><label>The chain might be beautiful, but this has nothing to do with whether the woman is beautiful</label><br />
+                    <input type="radio" name="response_woman_chain_beautiful" value="unlikely" required><label>The chain is unlikely to be beautiful, but might be</label><br />
+                    <input type="radio" name="response_woman_chain_beautiful" value="impossible" required><label>The chain cannot be beautiful</label><br />
+                    <input type="radio" name="response_woman_chain_beautiful" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_woman_chain_beautiful" value="wjj-nonsense"/><label>I don't know what it means for a woman to be beautiful</label>
+                    <input type="checkbox" name="word-nonsense_woman_chain_beautiful" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_woman_chain_beautiful" value="pw-nonsense"/><label>I don't know what it means for a woman to have a chain</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a boat, outlined with a blue box. Notice that each boat also has a letter. The letter is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_letter/2400608.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_letter/2413706.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_letter/815.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any boat, not the particular ones pictured. If the boat is long, which of the following is true?</h4>
+                    <input type="radio" name="response_boat_letter_long" value="guaranteed" required><label>The letter must also be long</label><br />
+                    <input type="radio" name="response_boat_letter_long" value="probably" required><label>The letter is probably long, but might not be</label><br />
+                    <input type="radio" name="response_boat_letter_long" value="unrelated" required><label>The letter might be long, but this has nothing to do with whether the boat is long</label><br />
+                    <input type="radio" name="response_boat_letter_long" value="unlikely" required><label>The letter is unlikely to be long, but might be</label><br />
+                    <input type="radio" name="response_boat_letter_long" value="impossible" required><label>The letter cannot be long</label><br />
+                    <input type="radio" name="response_boat_letter_long" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_boat_letter_long" value="wjj-nonsense"/><label>I don't know what it means for a boat to be long</label>
+                    <input type="checkbox" name="word-nonsense_boat_letter_long" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_boat_letter_long" value="pw-nonsense"/><label>I don't know what it means for a boat to have a letter</label><br />
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any boat, not the particular ones pictured. If the boat is wooden, which of the following is true?</h4>
+                    <input type="radio" name="response_boat_letter_wooden" value="guaranteed" required><label>The letter must also be wooden</label><br />
+                    <input type="radio" name="response_boat_letter_wooden" value="probably" required><label>The letter is probably wooden, but might not be</label><br />
+                    <input type="radio" name="response_boat_letter_wooden" value="unrelated" required><label>The letter might be wooden, but this has nothing to do with whether the boat is wooden</label><br />
+                    <input type="radio" name="response_boat_letter_wooden" value="unlikely" required><label>The letter is unlikely to be wooden, but might be</label><br />
+                    <input type="radio" name="response_boat_letter_wooden" value="impossible" required><label>The letter cannot be wooden</label><br />
+                    <input type="radio" name="response_boat_letter_wooden" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_boat_letter_wooden" value="wjj-nonsense"/><label>I don't know what it means for a boat to be wooden</label>
+                    <input type="checkbox" name="word-nonsense_boat_letter_wooden" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_boat_letter_wooden" value="pw-nonsense"/><label>I don't know what it means for a boat to have a letter</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a bed, outlined with a blue box. Notice that each bed also has a pillow. The pillow is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/bed_pillow/2335759.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/bed_pillow/2351481.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/bed_pillow/2403595.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any bed, not the particular ones pictured. If the bed is wooden, which of the following is true?</h4>
+                    <input type="radio" name="response_bed_pillow_wooden" value="guaranteed" required><label>The pillow must also be wooden</label><br />
+                    <input type="radio" name="response_bed_pillow_wooden" value="probably" required><label>The pillow is probably wooden, but might not be</label><br />
+                    <input type="radio" name="response_bed_pillow_wooden" value="unrelated" required><label>The pillow might be wooden, but this has nothing to do with whether the bed is wooden</label><br />
+                    <input type="radio" name="response_bed_pillow_wooden" value="unlikely" required><label>The pillow is unlikely to be wooden, but might be</label><br />
+                    <input type="radio" name="response_bed_pillow_wooden" value="impossible" required><label>The pillow cannot be wooden</label><br />
+                    <input type="radio" name="response_bed_pillow_wooden" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_bed_pillow_wooden" value="wjj-nonsense"/><label>I don't know what it means for a bed to be wooden</label>
+                    <input type="checkbox" name="word-nonsense_bed_pillow_wooden" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_bed_pillow_wooden" value="pw-nonsense"/><label>I don't know what it means for a bed to have a pillow</label><br />
+                </div>
+                <br />
+
+                <div>
+                    <h4>Each of the pictures below has a road, outlined with a blue box. Notice that each road also has a dirt. The dirt is outlined with a red box.</h4>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/road_dirt/2347836.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/road_dirt/2400185.png" width="360px"/>
+                    <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/road_dirt/2406409.png" width="360px"/>
+                </div>
+                <br />
+                <div>
+                    <h4>Now consider any road, not the particular ones pictured. If the road is open, which of the following is true?</h4>
+                    <input type="radio" name="response_road_dirt_open" value="guaranteed" required><label>The dirt must also be open</label><br />
+                    <input type="radio" name="response_road_dirt_open" value="probably" required><label>The dirt is probably open, but might not be</label><br />
+                    <input type="radio" name="response_road_dirt_open" value="unrelated" required><label>The dirt might be open, but this has nothing to do with whether the road is open</label><br />
+                    <input type="radio" name="response_road_dirt_open" value="unlikely" required><label>The dirt is unlikely to be open, but might be</label><br />
+                    <input type="radio" name="response_road_dirt_open" value="impossible" required><label>The dirt cannot be open</label><br />
+                    <input type="radio" name="response_road_dirt_open" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense_road_dirt_open" value="wjj-nonsense"/><label>I don't know what it means for a road to be open</label>
+                    <input type="checkbox" name="word-nonsense_road_dirt_open" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense_road_dirt_open" value="pw-nonsense"/><label>I don't know what it means for a road to have a dirt</label><br />
+                </div>
+                <br />
+
+                <p><input type='submit' id='submitButton' value='Submit' /></p></form> 
+
+            <script language='Javascript'>turkSetAssignmentID();</script>
+
+        </body>
+    </html>
+   ]]>
+
+    </HTMLContent>
+
+    <FrameHeight>800</FrameHeight>
+
+</HTMLQuestion>
