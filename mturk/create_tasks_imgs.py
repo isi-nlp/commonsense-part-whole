@@ -10,6 +10,19 @@ from collections import defaultdict
 
 MTURK_URL = 'https://mturk-requester.us-east-1.amazonaws.com'
 
+def replace_template(soup, span, whole=None, part=None, jj=None):
+    new_span = soup.new_tag('span')
+    if 'WHOLE' in span.text:
+        new_span.attrs['class'] = 'whole'
+        new_span.string = span.text.replace('WHOLE', whole)
+    if 'PART' in span.text:
+        new_span.attrs['class'] = 'part'
+        new_span.string = span.text.replace('PART', part)
+    if 'ADJECTIVE' in span.text:
+        new_span.attrs['class'] = 'jj'
+        new_span.string = span.text.replace('ADJECTIVE', jj)
+    return new_span
+
 def reload_template(whole, part):
     prompt = open('prompt_imgs.xml').read()
     full = xmltodict.parse(prompt)
@@ -28,29 +41,45 @@ def reload_template(whole, part):
     for i,img in enumerate(form.findChildren('div')[0].findChildren('img')):
         img['src'] = 'https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/%s/%s' % (pw, new_srcs[i])
 
-    initial_sentence = soup.new_tag('h4')
     #basic logic for a vs. an
     #det = 'an' if part[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
-    initial_sentence.string = form.findChildren('div')[0].h4.text.replace('WHOLE', whole).replace('PART', part)
-    form.findChildren('div')[0].h4.replace_with(initial_sentence)
+    for span in form.findChildren('div')[0].h4.findChildren('span'):
+        new_span = replace_template(soup, span, whole, part)
+        span.replace_with(new_span)
     return prompt, full, soup, form
 
 def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
     form = "<![CDATA[\n" + form_str + "\n\n]]>" #dumb hack to make the unparse() output valid
     full['HTMLQuestion']['HTMLContent'] = form
     prompt = html.unescape(xmltodict.unparse(full))
-    title = 'Common sense visual reasoning %s' % title 
+    title = 'Common sense visual reasoning %s' % title
     if not dryrun:
         new_hit = mturk.create_hit(
                                    Title = title,
                                    Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
                                    Keywords = 'images, quick, question answering',
-                                   Reward = '0.02',
-                                   MaxAssignments = 3,
-                                   LifetimeInSeconds = 60*60*24, #1 day
-                                   AssignmentDurationInSeconds = 60*5, #5 minutes
+                                   Reward = '0.03',
+                                   MaxAssignments = 5,
+                                   LifetimeInSeconds = 60*60*24*2, #2 days
+                                   AssignmentDurationInSeconds = 60*10, #10 minutes
                                    AutoApprovalDelayInSeconds = 60*60*4, #4 hours
-                                   Question = prompt
+                                   Question = prompt,
+                                   QualificationRequirements = [
+                                     {
+                                         'QualificationTypeId': '00000000000000000040', #number of HITs approved
+                                         'Comparator': 'GreaterThanOrEqualTo',
+                                         'IntegerValues': [
+                                             500,
+                                         ],
+                                     },
+                                     {
+                                         'QualificationTypeId': '000000000000000000L0', #percentage assignments approved
+                                         'Comparator': 'GreaterThanOrEqualTo',
+                                         'IntegerValues': [
+                                             98,
+                                         ]
+                                     }
+                                   ]
         )
         w.writerow([title, "https://worker.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
     else:
@@ -63,7 +92,7 @@ if __name__ == "__main__":
     parser.add_argument('--max-hits', default=10, dest='max_hits', type=int, help="maximum number of HITs to make")
     parser.add_argument('--max-pws', default=100000, dest='max_pws', type=int, help="maximum number of part-wholes to make HITs from")
     parser.add_argument('--dry-run', dest='dry_run', action='store_const', const=True, help='flag to not actually make HITs')
-    parser.add_argument('--avoid-annotated', dest='avoid_annotated', action='store_const', const=True, help='flag to avoid triples that we already got annotations for')
+    parser.add_argument('--jjs-per-hit', dest='jjs_per_hit', type=int, default=3, help="maximum number of questions per HIT (jj's per part-whole)")
     args = parser.parse_args()
 
     ############# AWS STUFF #################
@@ -87,40 +116,24 @@ if __name__ == "__main__":
                       )
     #########################################
 
+    triples = set()
+    result_dir = '/home/jamesm/commonsense-part-whole/mturk/hit_results/'
+    for fn in os.listdir(result_dir):
+        with open('%s/%s' % (result_dir, fn)) as f:
+            r = csv.reader(f)
+            next(r)
+            for row in r:
+                triples.add(tuple(row[3:6]))
+
     print("reading examples")
     examples = [row for row in csv.reader(open('/home/jamesm/commonsense-part-whole/data/candidates/%s' % (args.candidate_file)))]
     lem = WordNetLemmatizer()
     #parse examples into (whole, part) : {jjs} lookup
-    pw2jjs_raw = defaultdict(set)
+    pw2jjs = defaultdict(set)
     for whole, part, jj in examples:
         whole_lem = lem.lemmatize(whole.replace(' ', '_')).replace('_', ' ')
         part_lem = lem.lemmatize(part.replace(' ', '_')).replace('_', ' ')
-        pw2jjs_raw[(whole_lem, part_lem)].add(jj)
-
-    annotated_triples = set()
-    for result in os.listdir('hit_results/'):
-        if result.endswith('.csv'):
-            with open(result) as f:
-                r = csv.reader(f)
-                #header
-                next(r)
-                for row in r:
-                    annotated.triples.add((row[3], row[4], row[5]))
-
-    #just lemmatize everything
-    #pw2jjs = defaultdict(set)
-    #for whole, part, jj in examples:
-    #    whole_lem = lem.lemmatize(whole.replace(' ', '_'))
-    #    part_lem = lem.lemmatize(part.replace(' ', '_'))
-    #    if (whole_lem, part_lem) in pw2jjs_raw:
-    #        pw2jjs[(whole_lem, part_lem)].update(pw2jjs_raw[(whole, part)])
-    #    elif (whole, part_lem) in pw2jjs_raw:
-    #        pw2jjs[(whole, part_lem)].update(pw2jjs_raw[(whole, part)])
-    #    elif (whole_lem, part) in pw2jjs_raw:
-    #        pw2jjs[(whole_lem, part)].update(pw2jjs_raw[(whole, part)])
-    #    else:
-    #        pw2jjs[(whole, part)].update(pw2jjs_raw[(whole, part)])
-    pw2jjs = pw2jjs_raw
+        pw2jjs[(whole_lem, part_lem)].add(jj)
 
     wholes = set([w for w,_ in pw2jjs.keys()])
     parts = set([p for _,p in pw2jjs.keys()])
@@ -154,27 +167,29 @@ if __name__ == "__main__":
             num_in_hit = 0
             hit_jjs = []
             for i, jj in enumerate(jjs):
-                #skip previously annotated triples
-                if (whole, part, jj) in annotated_triples:
+                #ignore those we have already annotated
+                if (whole, part, jj) in triples:
                     continue
                 #replace followup sentence
-                followup_sent = soup.new_tag('h4')
                 div = form.findChildren('div')[num_in_hit+1]
-                followup_sent.string = div.h4.text.replace('WHOLE', whole).replace('ADJECTIVE', jj)
-                div.h4.replace_with(followup_sent)
+                for span in div.p.findChildren('span'):
+                    new_span = replace_template(soup, span, whole, part, jj)
+                    span.replace_with(new_span)
 
                 #also replace radio button labels
                 for label in div.findChildren('label'):
-                    old_str = label.text
-                    new_label = soup.new_tag('label')
-                    new_label.string = old_str.replace('WHOLE', whole).replace('PART', part).replace('ADJECTIVE', jj)
-                    label.replace_with(new_label)
+                    for span in label.findChildren('span'):
+                        new_span = replace_template(soup, span, whole, part, jj)
+                        span.replace_with(new_span)
 
                 hit_jjs.append(jj)
                 num_in_hit += 1
 
-                if num_in_hit >= 3:
-                    # we have three followups, create the HIT
+                if num_in_hit >= args.jjs_per_hit:
+                    # we have enough followups, create the HIT
+                    #remove extra divs
+                    for i in range(10, num_in_hit, -1):
+                        form.findChildren('div')[i].decompose()
                     make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                     num_hits += 1
                     num_in_hit = 0
@@ -192,7 +207,7 @@ if __name__ == "__main__":
             #we're done, make a HIT with any remaining
             if num_in_hit > 0:
                 #remove extra divs
-                for i in range(3, num_in_hit, -1):
+                for i in range(10, num_in_hit, -1):
                     form.findChildren('div')[i].decompose()
                 make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                 num_hits += 1

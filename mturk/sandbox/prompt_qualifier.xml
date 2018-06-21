@@ -45,7 +45,7 @@
                     <input type="radio" name="response_leg_knee_bent" value="unlikely" required><label>The knee is unlikely to be bent, but might be</label><br />
                     <input type="radio" name="response_leg_knee_bent" value="impossible" required><label>The knee cannot be bent</label><br />
                     <input type="radio" name="response_leg_knee_bent" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_leg_knee_bent" value="wjj-nonsense"/><label>I don't know what it means for a leg to be bent</label>
                     <input type="checkbox" name="word-nonsense_leg_knee_bent" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_leg_knee_bent" value="pw-nonsense"/><label>I don't know what it means for a leg to have a knee</label><br />
@@ -67,7 +67,7 @@
                     <input type="radio" name="response_boat_top_open" value="unlikely" required><label>The top is unlikely to be open, but might be</label><br />
                     <input type="radio" name="response_boat_top_open" value="impossible" required><label>The top cannot be open</label><br />
                     <input type="radio" name="response_boat_top_open" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_boat_top_open" value="wjj-nonsense"/><label>I don't know what it means for a boat to be open</label>
                     <input type="checkbox" name="word-nonsense_boat_top_open" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_boat_top_open" value="pw-nonsense"/><label>I don't know what it means for a boat to have a top</label><br />
@@ -89,7 +89,7 @@
                     <input type="radio" name="response_woman_shoulder_beautiful" value="unlikely" required><label>The shoulder is unlikely to be beautiful, but might be</label><br />
                     <input type="radio" name="response_woman_shoulder_beautiful" value="impossible" required><label>The shoulder cannot be beautiful</label><br />
                     <input type="radio" name="response_woman_shoulder_beautiful" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_woman_shoulder_beautiful" value="wjj-nonsense"/><label>I don't know what it means for a woman to be beautiful</label>
                     <input type="checkbox" name="word-nonsense_woman_shoulder_beautiful" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_woman_shoulder_beautiful" value="pw-nonsense"/><label>I don't know what it means for a woman to have a shoulder</label><br />
@@ -111,7 +111,7 @@
                     <input type="radio" name="response_jacket_collar_brown" value="unlikely" required><label>The collar is unlikely to be brown, but might be</label><br />
                     <input type="radio" name="response_jacket_collar_brown" value="impossible" required><label>The collar cannot be brown</label><br />
                     <input type="radio" name="response_jacket_collar_brown" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_jacket_collar_brown" value="wjj-nonsense"/><label>I don't know what it means for a jacket to be brown</label>
                     <input type="checkbox" name="word-nonsense_jacket_collar_brown" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_jacket_collar_brown" value="pw-nonsense"/><label>I don't know what it means for a jacket to have a collar</label><br />
@@ -133,7 +133,7 @@
                     <input type="radio" name="response_woman_chain_beautiful" value="unlikely" required><label>The chain is unlikely to be beautiful, but might be</label><br />
                     <input type="radio" name="response_woman_chain_beautiful" value="impossible" required><label>The chain cannot be beautiful</label><br />
                     <input type="radio" name="response_woman_chain_beautiful" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_woman_chain_beautiful" value="wjj-nonsense"/><label>I don't know what it means for a woman to be beautiful</label>
                     <input type="checkbox" name="word-nonsense_woman_chain_beautiful" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_woman_chain_beautiful" value="pw-nonsense"/><label>I don't know what it means for a woman to have a chain</label><br />
@@ -155,7 +155,7 @@
                     <input type="radio" name="response_boat_letter_long" value="unlikely" required><label>The letter is unlikely to be long, but might be</label><br />
                     <input type="radio" name="response_boat_letter_long" value="impossible" required><label>The letter cannot be long</label><br />
                     <input type="radio" name="response_boat_letter_long" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_boat_letter_long" value="wjj-nonsense"/><label>I don't know what it means for a boat to be long</label>
                     <input type="checkbox" name="word-nonsense_boat_letter_long" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_boat_letter_long" value="pw-nonsense"/><label>I don't know what it means for a boat to have a letter</label><br />
@@ -169,7 +169,7 @@
                     <input type="radio" name="response_boat_letter_wooden" value="unlikely" required><label>The letter is unlikely to be wooden, but might be</label><br />
                     <input type="radio" name="response_boat_letter_wooden" value="impossible" required><label>The letter cannot be wooden</label><br />
                     <input type="radio" name="response_boat_letter_wooden" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_boat_letter_wooden" value="wjj-nonsense"/><label>I don't know what it means for a boat to be wooden</label>
                     <input type="checkbox" name="word-nonsense_boat_letter_wooden" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_boat_letter_wooden" value="pw-nonsense"/><label>I don't know what it means for a boat to have a letter</label><br />
@@ -191,7 +191,7 @@
                     <input type="radio" name="response_bed_pillow_wooden" value="unlikely" required><label>The pillow is unlikely to be wooden, but might be</label><br />
                     <input type="radio" name="response_bed_pillow_wooden" value="impossible" required><label>The pillow cannot be wooden</label><br />
                     <input type="radio" name="response_bed_pillow_wooden" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_bed_pillow_wooden" value="wjj-nonsense"/><label>I don't know what it means for a bed to be wooden</label>
                     <input type="checkbox" name="word-nonsense_bed_pillow_wooden" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_bed_pillow_wooden" value="pw-nonsense"/><label>I don't know what it means for a bed to have a pillow</label><br />
@@ -213,7 +213,7 @@
                     <input type="radio" name="response_road_dirt_open" value="unlikely" required><label>The dirt is unlikely to be open, but might be</label><br />
                     <input type="radio" name="response_road_dirt_open" value="impossible" required><label>The dirt cannot be open</label><br />
                     <input type="radio" name="response_road_dirt_open" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
-                    <hr></hr>
+                    <hr />
                     <input type="checkbox" name="wjj-nonsense_road_dirt_open" value="wjj-nonsense"/><label>I don't know what it means for a road to be open</label>
                     <input type="checkbox" name="word-nonsense_road_dirt_open" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_road_dirt_open" value="pw-nonsense"/><label>I don't know what it means for a road to have a dirt</label><br />

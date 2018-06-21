@@ -10,6 +10,19 @@ from collections import defaultdict
 
 MTURK_SANDBOX = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
 
+def replace_template(soup, span, whole=None, part=None, jj=None):
+    new_span = soup.new_tag('span')
+    if 'WHOLE' in span.text:
+        new_span.attrs['class'] = 'whole'
+        new_span.string = span.text.replace('WHOLE', whole)
+    if 'PART' in span.text:
+        new_span.attrs['class'] = 'part'
+        new_span.string = span.text.replace('PART', part)
+    if 'ADJECTIVE' in span.text:
+        new_span.attrs['class'] = 'jj'
+        new_span.string = span.text.replace('ADJECTIVE', jj)
+    return new_span
+
 def reload_template(whole, part):
     prompt = open('prompt_imgs.xml').read()
     full = xmltodict.parse(prompt)
@@ -28,11 +41,11 @@ def reload_template(whole, part):
     for i,img in enumerate(form.findChildren('div')[0].findChildren('img')):
         img['src'] = 'https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/%s/%s' % (pw, new_srcs[i])
 
-    initial_sentence = soup.new_tag('h4')
     #basic logic for a vs. an
     #det = 'an' if part[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
-    initial_sentence.string = form.findChildren('div')[0].h4.text.replace('WHOLE', whole).replace('PART', part)
-    form.findChildren('div')[0].h4.replace_with(initial_sentence)
+    for span in form.findChildren('div')[0].h4.findChildren('span'):
+        new_span = replace_template(soup, span, whole, part)
+        span.replace_with(new_span)
     return prompt, full, soup, form
 
 def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
@@ -45,12 +58,28 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
                                    Title = title,
                                    Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
                                    Keywords = 'images, quick, question answering',
-                                   Reward = '0.01',
-                                   MaxAssignments = 3,
+                                   Reward = '0.03',
+                                   MaxAssignments = 5,
                                    LifetimeInSeconds = 60*60*24, #1 day
                                    AssignmentDurationInSeconds = 60*5, #5 minutes
                                    AutoApprovalDelayInSeconds = 60*60*4, #4 hours
-                                   Question = prompt
+                                   Question = prompt,
+                                   QualificationRequirements = [
+                                     {
+                                         'QualificationTypeId': '00000000000000000040', #number of HITs approved
+                                         'Comparator': 'GreaterThanOrEqualTo',
+                                         'IntegerValues': [
+                                             100,
+                                         ],
+                                     },
+                                     {
+                                         'QualificationTypeId': '000000000000000000L0', #percentage assignments approved
+                                         'Comparator': 'GreaterThanOrEqualTo',
+                                         'IntegerValues': [
+                                             98,
+                                         ]
+                                     }
+                                   ]
         )
         w.writerow([title, "https://workersandbox.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
     else:
@@ -63,6 +92,7 @@ if __name__ == "__main__":
     parser.add_argument('--max-hits', default=10, dest='max_hits', type=int, help="maximum number of HITs to make")
     parser.add_argument('--max-pws', default=100000, dest='max_pws', type=int, help="maximum number of part-wholes to make HITs from")
     parser.add_argument('--dry-run', dest='dry_run', action='store_const', const=True, help='flag to not actually make HITs')
+    parser.add_argument('--jjs-per-hit', dest='jjs_per_hit', type=int, default=3, help="maximum number of questions per HIT (jj's per part-whole)")
     args = parser.parse_args()
 
     ############# AWS STUFF #################
@@ -145,23 +175,25 @@ if __name__ == "__main__":
             hit_jjs = []
             for i, jj in enumerate(jjs):
                 #replace followup sentence
-                followup_sent = soup.new_tag('h4')
                 div = form.findChildren('div')[num_in_hit+1]
-                followup_sent.string = div.h4.text.replace('WHOLE', whole).replace('ADJECTIVE', jj)
-                div.h4.replace_with(followup_sent)
+                for span in div.p.findChildren('span'):
+                    new_span = replace_template(soup, span, whole, part, jj)
+                    span.replace_with(new_span)
 
                 #also replace radio button labels
                 for label in div.findChildren('label'):
-                    old_str = label.text
-                    new_label = soup.new_tag('label')
-                    new_label.string = old_str.replace('WHOLE', whole).replace('PART', part).replace('ADJECTIVE', jj)
-                    label.replace_with(new_label)
+                    for span in label.findChildren('span'):
+                        new_span = replace_template(soup, span, whole, part, jj)
+                        span.replace_with(new_span)
 
                 hit_jjs.append(jj)
                 num_in_hit += 1
 
-                if num_in_hit >= 3:
-                    # we have three followups, create the HIT
+                if num_in_hit >= args.jjs_per_hit:
+                    # we have enough followups, create the HIT
+                    #remove extra divs
+                    for i in range(10, num_in_hit, -1):
+                        form.findChildren('div')[i].decompose()
                     make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                     num_hits += 1
                     num_in_hit = 0
@@ -179,7 +211,7 @@ if __name__ == "__main__":
             #we're done, make a HIT with any remaining
             if num_in_hit > 0:
                 #remove extra divs
-                for i in range(3, num_in_hit, -1):
+                for i in range(10, num_in_hit, -1):
                     form.findChildren('div')[i].decompose()
                 make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                 num_hits += 1

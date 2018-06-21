@@ -5,9 +5,31 @@
             <script type='text/javascript' src='https://s3.amazonaws.com/mturk-public/externalHIT_v1.js'></script>
             <style>
             div {
-                background-color: powderblue;
+                background-color: #e0e0e0;
                 margin-bottom: 20px;
                 display: inline-block;
+            }
+            label {
+                font-size: 12px;
+                vertical-align: middle;
+            }
+            input {
+                vertical-align: middle;
+            }
+            h4 {
+                margin-bottom: 4px
+            }
+            span {
+                font-weight: bold;
+            }
+            span.part {
+                color: red;
+            }
+            span.whole {
+                color: blue;
+            }
+            span.jj {
+                color: green;
             }
             </style>
         </head>
@@ -15,7 +37,7 @@
             <form name='mturk_form' method='post' id='mturk_form' action='https://www.mturk.com/mturk/externalSubmit'><input type='hidden' value='' name='assignmentId' id='assignmentId'/>
 
                 <div>
-                    <h4>Each of the pictures below has a WHOLE, outlined with a blue box. Notice that each WHOLE also has a PART. The PART is outlined with a red box.</h4>
+                    <h4>Each of the pictures below has a <span class="whole">WHOLE</span>, outlined with a blue box. Notice that each <span class="whole">WHOLE</span> also has a <span class="part">PART</span>. The <span class="part">PART</span> is outlined with a red box.</h4>
                     <img src="imgs/building_arches/2356570.png" width="360px"/>
                     <img src="imgs/building_arches/2388965.png" width="360px"/>
                     <img src="imgs/building_arches/2398920.png" width="360px"/>
@@ -23,46 +45,147 @@
                 <br />
 
                 <div>
-                    <h4>Now consider a different WHOLE, not pictured. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
-                    <input type="radio" name="response1" value="guaranteed" required><label>The PART must also be ADJECTIVE</label><br />
-                    <input type="radio" name="response1" value="probably" required><label>The PART is probably ADJECTIVE, but might not be</label><br />
-                    <input type="radio" name="response1" value="unrelated" required><label>The PART might be ADJECTIVE, but this has nothing to do with whether the WHOLE is ADJECTIVE</label><br />
-                    <input type="radio" name="response1" value="unlikely" required><label>The PART is unlikely to be ADJECTIVE, but might be</label><br />
-                    <input type="radio" name="response1" value="impossible" required><label>The PART cannot be ADJECTIVE</label><br />
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response1" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response1" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response1" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response1" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
                     <hr></hr>
-                    <input type="checkbox" name="wjj-nonsense1" value="wjj-nonsense"/><label>I don't know what it means for a WHOLE to be ADJECTIVE</label>
+                    <input type="checkbox" name="wjj-nonsense1" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense1" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
-                    <input type="checkbox" name="pw-nonsense1" value="pw-nonsense"/><label>I don't know what it means for a WHOLE to have a PART</label><br />
+                    <input type="checkbox" name="pw-nonsense1" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <br />
                 <div>
-                    <h4>Now consider a new WHOLE. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
-                    <input type="radio" name="response2" value="guaranteed" required><label>The PART must also be ADJECTIVE</label><br />
-                    <input type="radio" name="response2" value="probably" required><label>The PART is probably ADJECTIVE, but might not be</label><br />
-                    <input type="radio" name="response2" value="unrelated" required><label>The PART might be ADJECTIVE, but this has nothing to do with whether the WHOLE is ADJECTIVE</label><br />
-                    <input type="radio" name="response2" value="unlikely" required><label>The PART is unlikely to be ADJECTIVE, but might be</label><br />
-                    <input type="radio" name="response2" value="impossible" required><label>The PART cannot be ADJECTIVE</label><br />
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response2" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response2" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response2" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response2" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
                     <hr></hr>
-                    <input type="checkbox" name="wjj-nonsense2" value="wjj-nonsense"/><label>I don't know what it means for a WHOLE to be ADJECTIVE</label>
+                    <input type="checkbox" name="wjj-nonsense2" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense2" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
-                    <input type="checkbox" name="pw-nonsense2" value="pw-nonsense"/><label>I don't know what it means for a WHOLE to have a PART</label><br />
+                    <input type="checkbox" name="pw-nonsense2" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <br />
                 <div>
-                    <h4>Now consider a new WHOLE. If the WHOLE is ADJECTIVE, which of the following is true?</h4>
-                    <input type="radio" name="response3" value="guaranteed" required><label>The PART must also be ADJECTIVE</label><br />
-                    <input type="radio" name="response3" value="probably" required><label>The PART is probably ADJECTIVE, but might not be</label><br />
-                    <input type="radio" name="response3" value="unrelated" required><label>The PART might be ADJECTIVE, but this has nothing to do with whether the WHOLE is ADJECTIVE</label><br />
-                    <input type="radio" name="response3" value="unlikely" required><label>The PART is unlikely to be ADJECTIVE, but might be</label><br />
-                    <input type="radio" name="response3" value="impossible" required><label>The PART cannot be ADJECTIVE</label><br />
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response3" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response3" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response3" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response3" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
                     <hr></hr>
-                    <input type="checkbox" name="wjj-nonsense3" value="wjj-nonsense"/><label>I don't know what it means for a WHOLE to be ADJECTIVE</label>
+                    <input type="checkbox" name="wjj-nonsense3" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense3" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
-                    <input type="checkbox" name="pw-nonsense3" value="pw-nonsense"/><label>I don't know what it means for a WHOLE to have a PART</label><br />
+                    <input type="checkbox" name="pw-nonsense3" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response4" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response4" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response4" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense4" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense4" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense4" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response5" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response5" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response5" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense5" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense5" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense5" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response6" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response6" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response6" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense6" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense6" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense6" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response7" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response7" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response7" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense7" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense7" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense7" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response8" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response8" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response8" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense8" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense8" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense8" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response9" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response9" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response9" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense9" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense9" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense9" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <br />
+                <div>
+                    <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
+                    <input type="radio" name="response10" value="guaranteed" required><label>The <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="probably" required><label>The <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span>, but might not be</label><br />
+                    <input type="radio" name="response10" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="unlikely" required><label>The <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span>, but might be</label><br />
+                    <input type="radio" name="response10" value="impossible" required><label>The <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr></hr>
+                    <input type="checkbox" name="wjj-nonsense10" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense10" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pw-nonsense10" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <p lang="en-US" style="color: rgb(34, 34, 34)"><b>(Optional)</b> Please provide any comments that you have about this HIT. Thanks for doing our HIT! We appreciate your input!</p>
+
+                <p><textarea cols="80" name="comment" rows="4"></textarea></p>
                 <p><input type='submit' id='submitButton' value='Submit' /></p></form> 
 
             <script language='Javascript'>turkSetAssignmentID();</script>

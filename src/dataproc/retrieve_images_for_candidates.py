@@ -10,15 +10,15 @@ from PIL import Image as PIL_Image
 import requests
 from tqdm import tqdm
 
-with open('../data/nouns/vg_min_3.tsv') as f:
+with open('../../data/nouns/vg_min_3.tsv') as f:
     r = csv.reader(f, delimiter='\t')
     #header
     next(r)
     for i,row in tqdm(enumerate(r)):
         pw = '_'.join(row[:2])
-        if not os.path.isdir('../data/nouns/vg_imgs2/%s' % pw):
+        if not os.path.isdir('../../data/nouns/vg_imgs2/%s' % pw):
             print("no %s images found, downloading..." % pw)
-            os.mkdir('../data/nouns/vg_imgs3/%s' % pw)
+            os.mkdir('../../data/nouns/vg_imgs3/%s' % pw)
             for bbox_json in row[-3:]:
                 bbox = json.loads(bbox_json)
                 img_id = bbox['id']
@@ -51,7 +51,7 @@ with open('../data/nouns/vg_min_3.tsv') as f:
                     #fig = plt.gcf()
                     ax.imshow(img)
                     plt.tick_params(labelbottom=False, labelleft=False)
-                    fig.savefig('../data/nouns/vg_imgs3/%s/%d.png' % (pw, img_id), bbox_inches='tight', pad_inches=0)
+                    fig.savefig('../../data/nouns/vg_imgs3/%s/%d.png' % (pw, img_id), bbox_inches='tight', pad_inches=0)
                     plt.clf()
                     plt.close(fig)
                 except Exception as e:
@@ -59,4 +59,4 @@ with open('../data/nouns/vg_min_3.tsv') as f:
                     import pdb; pdb.set_trace()
         else:
             #we already have images for this pw
-            shutil.copytree('../data/nouns/vg_imgs2/%s' % pw, '../data/nouns/vg_imgs3/%s' % pw)
+            shutil.copytree('../../data/nouns/vg_imgs2/%s' % pw, '../../data/nouns/vg_imgs3/%s' % pw)

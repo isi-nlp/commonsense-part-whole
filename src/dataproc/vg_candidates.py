@@ -108,7 +108,7 @@ def get_part_to_filtered_lookup_wordnet(vgrels):
 
 if __name__ == "__main__":
     print("loading visual genome relationships...")
-    vgrels = json.load(open('../data/visualgenome/relationships.json'))
+    vgrels = json.load(open('../../data/visualgenome/relationships.json'))
     nlp = spacy.load('en_core_web_sm', parser=False, tagger=True, entity=False)
     nlp.tokenizer = WhitespaceTokenizer(nlp.vocab)
     descriptors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black', 'white', 'gray', 'grey', 'brown', 'pink', 'front', 'back', 'left', 'right']
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     lem = WordNetLemmatizer()
 
     BboxInfo = namedtuple('BboxInfo', ['id', 'px', 'py', 'pw', 'ph', 'wx', 'wy', 'ww', 'wh'])
-    with open('../data/nouns/vg_min_3_wat.tsv', 'w') as of:
+    with open('../../data/nouns/vg_min_3_wat.tsv', 'w') as of:
         w = csv.writer(of, delimiter='\t')
         w.writerow(['subject', 'object', 'num_whole', 'num_part', 'num_pw', 'img1', 'img2', 'img3'])
         #how many total instances of subj has obj

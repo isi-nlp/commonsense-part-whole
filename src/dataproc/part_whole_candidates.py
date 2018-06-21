@@ -130,7 +130,7 @@ def get_frequent_concrete_nouns(ngram_source, lem, min_count=10000):
 
 def get_part_whole_relations_vg(lem, min_count=1):
     # whole-ness filtering: compare with visual genome candidates
-    fname = '../data/nouns/vg_has_nouns_tfidf_aggressive_stats.csv'
+    fname = '../../data/nouns/vg_has_nouns_tfidf_aggressive_stats.csv'
     data_inds = (0,1)
     print("reading whole nouns from visual genome...")
     whole2parts = defaultdict(set)
@@ -169,7 +169,7 @@ def get_part_whole_relations_cn(lem):
 
     #get locations, which are a big class we don't want that survive all the filters
     locations = set()
-    with open('../data/conceptnet/conceptnet-isa-en.csv') as f:
+    with open('../../data/conceptnet/conceptnet-isa-en.csv') as f:
         r = csv.reader(f, delimiter='\t')
         for row in r:
             if row[3].split('/')[3] in ['city', 'administrative_region', 'country', 'continent']:
@@ -177,7 +177,7 @@ def get_part_whole_relations_cn(lem):
 
     whole2parts_cn = defaultdict(set)
     print("reading whole nouns from conceptnet...")
-    with open('../data/conceptnet/conceptnet-partof-en.csv') as f:                                                                                                                                    
+    with open('../../data/conceptnet/conceptnet-partof-en.csv') as f:                                                                                                                                    
         r = csv.reader(f, delimiter='\t')
         for i, row in tqdm(enumerate(r)):
             part = re.sub('_', ' ', row[2].split('/')[3])
@@ -189,14 +189,14 @@ def get_part_whole_relations_cn(lem):
 
 def get_part_whole_relations_wd(lem):
     whole2parts = defaultdict(set)
-    with open('../data/nouns/wikidata-pws.csv') as f:
+    with open('../../data/nouns/wikidata-pws.csv') as f:
         for row in csv.reader(f):
             whole2parts[row[0]].add(row[1])
     return whole2parts
 
 def get_part_whole_relations_pwkb(lem):
     # whole-ness filtering: compare with pwkb candidates. Include only PWKB entries with score 1, others are mostly junk
-    fname = '../data/pwkb/pwkb.txt'
+    fname = '../../data/pwkb/pwkb.txt'
     print("reading whole nouns from PWKB...")
     whole2parts = defaultdict(set)
     with open(fname) as f:

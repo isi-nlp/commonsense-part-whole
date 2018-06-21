@@ -18,7 +18,7 @@ mturk = boto3.client('mturk',
                      )
 
 prompt = open('prompt_qualifier.xml').read()
-title = "Common sense visual reasoning qualifier"
+title = "Common sense visual reasoning qualifier 2"
 qualifier_hit = mturk.create_hit(
                                  Title = title,
                                  Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
@@ -54,7 +54,7 @@ pw2jjs = {('leg', 'knee'): set(['bent']),
           ('boat', 'letter'): set(['long', 'wooden']),
           ('bed', 'pillow'): set(['wooden']),
           ('road', 'dirt'): set(['open'])}
-with open('hit_batches/qualifier.csv', 'w') as of:
+with open('hit_batches/qualifier_2.csv', 'w') as of:
     w = csv.writer(of)
     w.writerow(['title', 'url', 'HITid', 'whole', 'part', 'jj'])
     

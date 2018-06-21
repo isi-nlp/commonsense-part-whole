@@ -28,7 +28,7 @@ with open('/home/jamesm/commonsense-part-whole/data/adjectives/non-descript-jj-j
 
 
 print("reading noun-adjective counts from google dependency n-grams...")
-with open('../data/ngrams/nn-jj-amod/nn.jj.amod.all') as f:
+with open('../../data/ngrams/nn-jj-amod/nn.jj.amod.all') as f:
     r = csv.reader(f, delimiter=' ')
     noun2jjs = {}
     for row in r:
@@ -40,7 +40,7 @@ with open('../data/ngrams/nn-jj-amod/nn.jj.amod.all') as f:
         noun2jjs[noun] = jjs
 
 print("reading noun-adjective counts from visual genome...")
-attrs = json.load(open('../data/visualgenome/attributes.json'))
+attrs = json.load(open('../../data/visualgenome/attributes.json'))
 noun2jjs_vg = defaultdict(Counter)
 for img in attrs:
     for attr in img['attributes']:
@@ -50,7 +50,7 @@ for img in attrs:
  
 print("reading part-whole candidates")
 whole2parts = defaultdict(set)
-with open('../data/nouns/%s' % args.pw_dataset) as f:
+with open('../../data/nouns/%s' % args.pw_dataset) as f:
     delim = ',' if args.non_visual else '\t'
     r = csv.reader(f, delimiter=delim)
     #header
@@ -61,10 +61,10 @@ with open('../data/nouns/%s' % args.pw_dataset) as f:
 wholes = set(whole2parts.keys())
 
 if args.non_visual:
-    triples = set([tuple(row) for row in csv.reader(open('../data/adjectives/vg_only_mturk_candidates_mwe.csv'))])
+    triples = set([tuple(row) for row in csv.reader(open('../../data/adjectives/vg_only_mturk_candidates_mwe.csv'))])
 
 #take top 5 adjectives for the whole
-with open('../data/adjectives/%s' % args.out_file, 'w') as of:
+with open('../../data/adjectives/%s' % args.out_file, 'w') as of:
     w = csv.writer(of)
     for whole in tqdm(wholes):
 
@@ -115,5 +115,5 @@ with open('../data/adjectives/%s' % args.out_file, 'w') as of:
 #            #optionally filter to adjectives that have been applied to the part as well
 #            if part in noun2jjs and jj in noun2jjs[part]:
 #                pw = '_'.join([whole, part])
-#                with open('../data/nouns/vg_imgs/%s/jjs.csv' % pw, 'a') as of:
+#                with open('../../data/nouns/vg_imgs/%s/jjs.csv' % pw, 'a') as of:
 #                    of.write(','.join([whole, part, jj]) + '\n')

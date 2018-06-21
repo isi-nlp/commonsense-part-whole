@@ -29,13 +29,13 @@ def noun_count_from_unigram_file(fname):
 
 if __name__ == "__main__":
     #iterate over all lettered filenames
-    fnames = ['../data/ngrams/unigrams_fic/googlebooks-eng-fiction-all-1gram-20120701-%c' % chr(l) for l in range(ord('a'), ord('z')+1)]
+    fnames = ['../../data/ngrams/unigrams_fic/googlebooks-eng-fiction-all-1gram-20120701-%c' % chr(l) for l in range(ord('a'), ord('z')+1)]
 
     pool = Pool(processes=os.cpu_count())
     noun_counts = Counter()
     for alpha_counts in pool.imap_unordered(noun_count_from_unigram_file, fnames):
         noun_counts.update(alpha_counts)
 
-    with open('../data/ngrams/unigrams_fic/noun_counts_1950.csv', 'w') as of:
+    with open('../../data/ngrams/unigrams_fic/noun_counts_1950.csv', 'w') as of:
         for noun, count in sorted(noun_counts.items(), key=operator.itemgetter(0)):
             of.write(','.join([noun, str(count)]) + '\n')
