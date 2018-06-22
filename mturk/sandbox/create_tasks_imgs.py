@@ -64,25 +64,27 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
                                    AssignmentDurationInSeconds = 60*5, #5 minutes
                                    AutoApprovalDelayInSeconds = 60*60*4, #4 hours
                                    Question = prompt,
-                                   QualificationRequirements = [
-                                     {
-                                         'QualificationTypeId': '00000000000000000040', #number of HITs approved
-                                         'Comparator': 'GreaterThanOrEqualTo',
-                                         'IntegerValues': [
-                                             100,
-                                         ],
-                                     },
-                                     {
-                                         'QualificationTypeId': '000000000000000000L0', #percentage assignments approved
-                                         'Comparator': 'GreaterThanOrEqualTo',
-                                         'IntegerValues': [
-                                             98,
-                                         ]
-                                     }
-                                   ]
+                                   #QualificationRequirements = [
+                                   #  {
+                                   #      'QualificationTypeId': '00000000000000000040', #number of HITs approved
+                                   #      'Comparator': 'GreaterThanOrEqualTo',
+                                   #      'IntegerValues': [
+                                   #          100,
+                                   #      ],
+                                   #  },
+                                   #  {
+                                   #      'QualificationTypeId': '000000000000000000L0', #percentage assignments approved
+                                   #      'Comparator': 'GreaterThanOrEqualTo',
+                                   #      'IntegerValues': [
+                                   #          98,
+                                   #      ]
+                                   #  }
+                                   #]
         )
         w.writerow([title, "https://workersandbox.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
     else:
+        with open("page_%s_%s.html" % (whole, part), 'w') as of:
+            of.write(form_str)
         w.writerow([title, "https://workersandbox.mturk.com/mturk/preview?groupId=1", '2', whole, part, ';'.join(jjs)])
 
 if __name__ == "__main__":
@@ -173,6 +175,7 @@ if __name__ == "__main__":
 
             num_in_hit = 0
             hit_jjs = []
+            l_i = 0
             for i, jj in enumerate(jjs):
                 #replace followup sentence
                 div = form.findChildren('div')[num_in_hit+1+2]
@@ -182,9 +185,12 @@ if __name__ == "__main__":
 
                 #also replace radio button labels
                 for label in div.findChildren('label'):
+                    label.findPreviousSibling().attrs['id'] = str(l_i)
+                    label.attrs['for'] = str(l_i)
                     for span in label.findChildren('span'):
                         new_span = replace_template(soup, span, whole, part, jj)
                         span.replace_with(new_span)
+                    l_i += 1
 
                 hit_jjs.append(jj)
                 num_in_hit += 1
@@ -192,8 +198,8 @@ if __name__ == "__main__":
                 if num_in_hit >= args.jjs_per_hit:
                     # we have enough followups, create the HIT
                     #remove extra divs
-                    for i in range(10, num_in_hit, -1):
-                        form.findChildren('div')[i].decompose()
+                    for i in range(10-1, num_in_hit-1, -1):
+                        form.findChildren('div', {'class': 'question'})[i].decompose()
                     make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                     num_hits += 1
                     num_in_hit = 0
@@ -211,8 +217,8 @@ if __name__ == "__main__":
             #we're done, make a HIT with any remaining
             if num_in_hit > 0:
                 #remove extra divs
-                for i in range(10, num_in_hit, -1):
-                    form.findChildren('div')[i].decompose()
+                for i in range(10-1, num_in_hit-1, -1):
+                    form.findChildren('div', {'class': 'question'})[i].decompose()
                 make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                 num_hits += 1
                 if num_hits % 100 == 0:

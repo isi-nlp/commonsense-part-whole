@@ -1,6 +1,6 @@
 <HTMLQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd">
     <HTMLContent><![CDATA[
-<!DOCTYPE html>                                                       
+ <!DOCTYPE html>                                                       
     <html>
         <head>
             <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/> 
@@ -8,15 +8,15 @@
             <style>
             div {
                 background-color: #e0e0e0;
-                margin-bottom: 10px;
+                margin-bottom: 5px;
                 display: block;
-                    padding:2px;
+                    padding:5px;
             }
             div.instructions {
                 display: block;
             }
             label {
-                font-size: 12px;
+                font-size: 14px;
                 vertical-align: middle;
             }
             input {
@@ -24,6 +24,9 @@
             }
             h4 {
                 margin-bottom: 4px
+            }
+            h2 {
+                margin-bottom: 0px
             }
             span {
                 font-weight: bold;
@@ -45,7 +48,7 @@
                     <h2>Commonsense visual reasoning task</h2>
                     <div class="instructions">
                         <p>The purpose of this task is to answer common-sense questions about nouns and adjectives. </p>
-                        <p>If you can imagine an interpretation where the question makes sense, use that interpretation. If you aren't sure, just make your best guess.</p>
+                        <p>If you can imagine a real-world scenario in which the question makes sense, use that interpretation. If you aren't sure, just make your best guess.</p>
                         <p>The answer options and some examples are shown below:</p>
                         <ul>
                             <li>Consider a <span class="jj">young</span> <span class="whole">child</span>'s <span class="part">eye</span>. Because the <span class="whole">child</span> is <span class="jj">young</span>, the <span class="part">eye</span> <strong>must also be</strong> young.
@@ -64,9 +67,8 @@
                     <img src="imgs/building_arches/2388965.png" width="360px"/>
                     <img src="imgs/building_arches/2398920.png" width="360px"/>
                 </div>
-                <br />
 
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response1" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response1" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -79,8 +81,7 @@
                     <input type="checkbox" name="word-nonsense1" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense1" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response2" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response2" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -93,8 +94,7 @@
                     <input type="checkbox" name="word-nonsense2" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense2" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response3" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response3" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -107,8 +107,7 @@
                     <input type="checkbox" name="word-nonsense3" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense3" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response4" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response4" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -121,8 +120,7 @@
                     <input type="checkbox" name="word-nonsense4" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense4" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response5" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response5" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -135,8 +133,7 @@
                     <input type="checkbox" name="word-nonsense5" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense5" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response6" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response6" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -149,8 +146,7 @@
                     <input type="checkbox" name="word-nonsense6" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense6" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response7" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response7" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -163,8 +159,7 @@
                     <input type="checkbox" name="word-nonsense7" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense7" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response8" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response8" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -177,8 +172,7 @@
                     <input type="checkbox" name="word-nonsense8" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense8" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response9" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response9" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -191,8 +185,7 @@
                     <input type="checkbox" name="word-nonsense9" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense9" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
-                <br />
-                <div>
+                <div class="question">
                     <p>Now consider any <span class="whole">WHOLE</span>, not the particular ones pictured. If the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, which of the following is true?</p>
                     <input type="radio" name="response10" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
                     <input type="radio" name="response10" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
@@ -217,17 +210,20 @@
                 for (i = 0; i < coll.length; i++) {
                     coll[i].addEventListener("click", function() {
                         this.classList.toggle("active");
-                        console.log("okay");
-                        console.log(this);
                         var content = this.previousElementSibling;
-                        console.log(content);
                         if (content.style.display !== "none") {
                             content.style.display = "none";
                         } else {
                             content.style.display = "block";
                         }
+                        if (this.innerText === 'Collapse instructions') {
+                            this.innerText = 'Show instructions';
+                        } else {
+                            this.innerText = 'Collapse instructions';
+                        }
                     });
                 }
+                
             </script>
 
         </body>
