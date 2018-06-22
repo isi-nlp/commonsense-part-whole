@@ -7,6 +7,8 @@ from collections import defaultdict
 MTURK_SANDBOX = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
 
 def update_responses(responses, q_id, free_text):
+    if q_id == 'comment':
+        return responses, free_text
     ix = int(q_id[-1]) - 1
     if q_id.startswith('response'):
         if responses[ix] is None:
@@ -17,7 +19,8 @@ def update_responses(responses, q_id, free_text):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("batch_id", type=str, help="ID for the batch you want results for")
+    parser.add_argument("hit_file", type=str, help="path to the batch you want results for")
+    parser.add_argument("result_file", type=str, help="path to save the retrieved annotations")
     parser.add_argument("status", choices=['Submitted', 'Approved', 'Rejected'], help="What kind of results you want")
     parser.add_argument("--num-assignments", dest="num_assignments", type=int, default=3, help="how many assignments there were for this batch (default: 3)")
     args = parser.parse_args()
@@ -36,51 +39,64 @@ if __name__ == "__main__":
                          endpoint_url = MTURK_SANDBOX
                          )
 
-    with open('hit_batches/batch_%s.csv' % args.batch_id) as f:
-        with open('hit_results/batch_%s.csv' % args.batch_id, 'w') as of:
-            w = csv.writer(of)
-            r = csv.reader(f)
-            header = next(r)
-            for i in range(args.num_assignments):
-                header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
-            w.writerow(header)
-            hit_ids = set()
-            for row in r:
-                hit_id = row[2]
-                jjs = row[-1].split(';')
-                print(hit_id)
+    with open(args.hit_file) as f:
+        with open(args.result_file, 'w') as of:
+            with open('hit_comments.csv', 'a') as cf:
+                w = csv.writer(of)
+                cw = csv.writer(cf)
+                r = csv.reader(f)
+                header = next(r)
+                for i in range(args.num_assignments):
+                    header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
+                w.writerow(header)
+                hit_ids = set()
+                for row in r:
+                    hit_id = row[2]
+                    jjs = row[-1].split(';')
+                    pw = tuple(row[3:5])
+                    print(hit_id)
 
-                worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status])
+                    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status])
 
-                responses = defaultdict(list)
-                worker_ids = defaultdict(list)
-                if worker_results['NumResults'] > 0:
-                    for assignment in worker_results['Assignments']:
-                        worker_id = assignment['WorkerId']
-                        assgn_responses = [None] * len(jjs)
-                        xml_doc = xmltodict.parse(assignment['Answer'])
+                    responses = defaultdict(list)
+                    worker_ids = defaultdict(list)
+                    comments = defaultdict(list)
+                    if worker_results['NumResults'] > 0:
+                        for assignment in worker_results['Assignments']:
+                            worker_id = assignment['WorkerId']
+                            assgn_responses = [None] * len(jjs)
+                            xml_doc = xmltodict.parse(assignment['Answer'])
 
-                        if type(xml_doc['QuestionFormAnswers']['Answer']) is list:
-                            # Multiple fields in HIT layout
-                            for i,answer_field in enumerate(xml_doc['QuestionFormAnswers']['Answer']):
-                                assgn_responses = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
-                        else:
-                            # One field found in HIT layout
-                            answer_field = xml_doc['QuestionFormAnswers']['Answer']
-                            assgn_responses = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
-                        for jj, res in zip(jjs, assgn_responses):
-                            responses[jj].append(res)
-                            worker_ids[jj].append(worker_id)
-                    #import pdb; pdb.set_trace()
-                else:
-                    print("No results ready yet")
-                    continue
+                            if type(xml_doc['QuestionFormAnswers']['Answer']) is list:
+                                # Multiple fields in HIT layout
+                                for i,answer_field in enumerate(xml_doc['QuestionFormAnswers']['Answer']):
+                                    assgn_responses, comment = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
+                                    if comment is not None and comment != '':
+                                        print(comment)
+                                        comments[pw].append((worker_id, comment))
+                            else:
+                                # One field found in HIT layout
+                                answer_field = xml_doc['QuestionFormAnswers']['Answer']
+                                assgn_responses, comment = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
+                                if comment is not None and comment != '':
+                                    print(comment)
+                                    comments[pw].append((worker_id, comment))
+                            for jj, res in zip(jjs, assgn_responses):
+                                responses[jj].append(res)
+                                worker_ids[jj].append(worker_id)
+                    else:
+                        print("No results ready yet")
+                        continue
 
-                for jj, res in zip(jjs, responses):
-                    to_write = row[:5]
-                    to_write.append(jj)
-                    for res, worker_id in zip(responses[jj], worker_ids[jj]):
-                        to_write.append(res)
-                        to_write.append(worker_id)
-                    w.writerow(to_write)
-                print()
+                    for jj, res in zip(jjs, responses):
+                        to_write = row[:5]
+                        to_write.append(jj)
+                        for res, worker_id in zip(responses[jj], worker_ids[jj]):
+                            to_write.append(res)
+                            to_write.append(worker_id)
+                        w.writerow(to_write)
+                    print()
+
+                    for (part, whole), worker_comments in comments.items():
+                        for worker, comment in worker_comments:
+                            cw.writerow([hit_id, worker, whole, part, comment])

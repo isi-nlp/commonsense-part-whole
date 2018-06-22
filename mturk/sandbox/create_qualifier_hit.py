@@ -17,8 +17,8 @@ mturk = boto3.client('mturk',
                      endpoint_url = MTURK_SANDBOX
                      )
 
-prompt = open('prompt_qualifier.xml').read()
-title = "Common sense visual reasoning qualifier 2"
+prompt = open('prompt_qualifier_causal.xml').read()
+title = "Common sense visual reasoning qualifier 4"
 qualifier_hit = mturk.create_hit(
                                  Title = title,
                                  Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
@@ -29,22 +29,22 @@ qualifier_hit = mturk.create_hit(
                                  AssignmentDurationInSeconds = 60*30, #30 minutes
                                  AutoApprovalDelayInSeconds = 60*60*24, #1 day
                                  Question = prompt,
-                                 QualificationRequirements = [
-                                     {
-                                         'QualificationTypeId': '00000000000000000040', #number of HITs approved
-                                         'Comparator': 'GreaterThanOrEqualTo',
-                                         'IntegerValues': [
-                                             500,
-                                         ],
-                                     },
-                                     {
-                                         'QualificationTypeId': '000000000000000000L0', #percentage assignments approved
-                                         'Comparator': 'GreaterThanOrEqualTo',
-                                         'IntegerValues': [
-                                             98,
-                                         ]
-                                     }
-                                     ]
+                                 #QualificationRequirements = [
+                                 #    {
+                                 #        'QualificationTypeId': '00000000000000000040', #number of HITs approved
+                                 #        'Comparator': 'GreaterThanOrEqualTo',
+                                 #        'IntegerValues': [
+                                 #            500,
+                                 #        ],
+                                 #    },
+                                 #    {
+                                 #        'QualificationTypeId': '000000000000000000L0', #percentage assignments approved
+                                 #        'Comparator': 'GreaterThanOrEqualTo',
+                                 #        'IntegerValues': [
+                                 #            98,
+                                 #        ]
+                                 #    }
+                                 #    ]
                                  )
 pw2jjs = {('leg', 'knee'): set(['bent']),
           ('boat', 'top'): set(['open']),

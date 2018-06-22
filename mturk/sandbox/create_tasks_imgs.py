@@ -38,12 +38,12 @@ def reload_template(whole, part):
         print("dir not found: %s" % pw)
         return None, None, None, None
 
-    for i,img in enumerate(form.findChildren('div')[0].findChildren('img')):
+    for i,img in enumerate(form.findChildren('div')[2].findChildren('img')):
         img['src'] = 'https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/%s/%s' % (pw, new_srcs[i])
 
     #basic logic for a vs. an
     #det = 'an' if part[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
-    for span in form.findChildren('div')[0].h4.findChildren('span'):
+    for span in form.findChildren('div')[2].h4.findChildren('span'):
         new_span = replace_template(soup, span, whole, part)
         span.replace_with(new_span)
     return prompt, full, soup, form
@@ -175,7 +175,7 @@ if __name__ == "__main__":
             hit_jjs = []
             for i, jj in enumerate(jjs):
                 #replace followup sentence
-                div = form.findChildren('div')[num_in_hit+1]
+                div = form.findChildren('div')[num_in_hit+1+2]
                 for span in div.p.findChildren('span'):
                     new_span = replace_template(soup, span, whole, part, jj)
                     span.replace_with(new_span)
