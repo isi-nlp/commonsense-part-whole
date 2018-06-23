@@ -15,7 +15,7 @@ def update_responses(responses, q_id, free_text):
             responses[ix] = free_text
     elif 'nonsense' in q_id:
         responses[ix] = free_text
-    return responses
+    return responses, None
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -6,14 +6,15 @@
             <style>
             div {
                 background-color: #e0e0e0;
-                margin-bottom: 20px;
-                display: inline-block;
+                margin-bottom: 5px;
+                display: block;
+                    padding:5px;
             }
             div.instructions {
                 display: block;
             }
             label {
-                font-size: 12px;
+                font-size: 14px;
                 vertical-align: middle;
             }
             input {
@@ -21,6 +22,9 @@
             }
             h4 {
                 margin-bottom: 4px
+            }
+            h2 {
+                margin-bottom: 0px
             }
             span {
                 font-weight: bold;
@@ -39,8 +43,7 @@
         </head>
         <body> 
             <form name='mturk_form' method='post' id='mturk_form' action='https://www.mturk.com/mturk/externalSubmit'><input type='hidden' value='' name='assignmentId' id='assignmentId'/>
-
-                <div>
+               <div>
                     <h2>Commonsense visual reasoning qualifer task</h2>
                     <div class="instructions">
                         <p>The purpose of this task is to answer common-sense questions about nouns and adjectives. </p>
@@ -49,13 +52,13 @@
                     </div>
                     <button type='button' class="collapsible">Collapse instructions</button>
                 </div>
+                
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">leg</span>, outlined with a blue box. Notice that each <span class="whole">leg</span> also has a <span class="part">knee</span>. The <span class="part">knee</span> is outlined with a red box.</h4>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/leg_knee/2415067.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/leg_knee/2360247.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/leg_knee/2399801.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">leg</span>, not the particular ones pictured. If the <span class="whole">leg</span> is <span class="jj">bent</span>, which of the following is true?</h4>
                     <input type="radio" name="response_leg_knee_bent" value="guaranteed" required><label>The <span class="part">knee</span> must also be <span class="jj">bent</span></label><br />
@@ -69,7 +72,6 @@
                     <input type="checkbox" name="word-nonsense_leg_knee_bent" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_leg_knee_bent" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">leg</span> to have a <span class="part">knee</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">boat</span>, outlined with a blue box. Notice that each <span class="whole">boat</span> also has a <span class="part">top</span>. The <span class="part">top</span> is outlined with a red box.</h4>
@@ -77,7 +79,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_top/2324462.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_top/2397279.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">boat</span>, not the particular ones pictured. If the <span class="whole">boat</span> is <span class="jj">open</span>, which of the following is true?</h4>
                     <input type="radio" name="response_boat_top_open" value="guaranteed" required><label>The <span class="part">top</span> must also be <span class="jj">open</span></label><br />
@@ -91,7 +92,6 @@
                     <input type="checkbox" name="word-nonsense_boat_top_open" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_boat_top_open" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">boat</span> to have a <span class="part">top</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">woman</span>, outlined with a blue box. Notice that each <span class="whole">woman</span> also has a <span class="part">shoulder</span>. The <span class="part">shoulder</span> is outlined with a red box.</h4>
@@ -99,7 +99,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_shoulder/2382655.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_shoulder/2417156.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">woman</span>, not the particular ones pictured. If the <span class="whole">woman</span> is <span class="jj">beautiful</span>, which of the following is true?</h4>
                     <input type="radio" name="response_woman_shoulder_beautiful" value="guaranteed" required><label>The <span class="part">shoulder</span> must also be <span class="jj">beautiful</span></label><br />
@@ -113,7 +112,6 @@
                     <input type="checkbox" name="word-nonsense_woman_shoulder_beautiful" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_woman_shoulder_beautiful" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">woman</span> to have a <span class="part">shoulder</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">jacket</span>, outlined with a blue box. Notice that each <span class="whole">jacket</span> also has a <span class="part">collar</span>. The <span class="part">collar</span> is outlined with a red box.</h4>
@@ -121,7 +119,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/jacket_collar/2366403.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/jacket_collar/2409744.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">jacket</span>, not the particular ones pictured. If the <span class="whole">jacket</span> is <span class="jj">brown</span>, which of the following is true?</h4>
                     <input type="radio" name="response_jacket_collar_brown" value="guaranteed" required><label>The <span class="part">collar</span> must also be <span class="jj">brown</span></label><br />
@@ -135,7 +132,6 @@
                     <input type="checkbox" name="word-nonsense_jacket_collar_brown" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_jacket_collar_brown" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">jacket</span> to have a <span class="part">collar</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">woman</span>, outlined with a blue box. Notice that each <span class="whole">woman</span> also has a <span class="part">chain</span>. The <span class="part">chain</span> is outlined with a red box.</h4>
@@ -143,7 +139,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_chain/2357361.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/woman_chain/2383655.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">woman</span>, not the particular ones pictured. If the <span class="whole">woman</span> is <span class="jj">beautiful</span>, which of the following is true?</h4>
                     <input type="radio" name="response_woman_chain_beautiful" value="guaranteed" required><label>The <span class="part">chain</span> must also be <span class="jj">beautiful</span></label><br />
@@ -157,7 +152,6 @@
                     <input type="checkbox" name="word-nonsense_woman_chain_beautiful" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_woman_chain_beautiful" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">woman</span> to have a <span class="part">chain</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">boat</span>, outlined with a blue box. Notice that each <span class="whole">boat</span> also has a <span class="part">letter</span>. The <span class="part">letter</span> is outlined with a red box.</h4>
@@ -165,7 +159,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_letter/2413706.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/boat_letter/815.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">boat</span>, not the particular ones pictured. If the <span class="whole">boat</span> is <span class="jj">long</span>, which of the following is true?</h4>
                     <input type="radio" name="response_boat_letter_long" value="guaranteed" required><label>The <span class="part">letter</span> must also be <span class="jj">long</span></label><br />
@@ -179,7 +172,6 @@
                     <input type="checkbox" name="word-nonsense_boat_letter_long" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_boat_letter_long" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">boat</span> to have a <span class="part">letter</span></label><br />
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">boat</span>, not the particular ones pictured. If the <span class="whole">boat</span> is <span class="jj">wooden</span>, which of the following is true?</h4>
                     <input type="radio" name="response_boat_letter_wooden" value="guaranteed" required><label>The <span class="part">letter</span> must also be <span class="jj">wooden</span></label><br />
@@ -193,7 +185,6 @@
                     <input type="checkbox" name="word-nonsense_boat_letter_wooden" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_boat_letter_wooden" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">boat</span> to have a <span class="part">letter</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">bed</span>, outlined with a blue box. Notice that each <span class="whole">bed</span> also has a <span class="part">pillow</span>. The <span class="part">pillow</span> is outlined with a red box.</h4>
@@ -201,7 +192,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/bed_pillow/2351481.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/bed_pillow/2403595.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">bed</span>, not the particular ones pictured. If the <span class="whole">bed</span> is <span class="jj">wooden</span>, which of the following is true?</h4>
                     <input type="radio" name="response_bed_pillow_wooden" value="guaranteed" required><label>The <span class="part">pillow</span> must also be <span class="jj">wooden</span></label><br />
@@ -215,7 +205,6 @@
                     <input type="checkbox" name="word-nonsense_bed_pillow_wooden" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_bed_pillow_wooden" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">bed</span> to have a <span class="part">pillow</span></label><br />
                 </div>
-                <br />
 
                 <div>
                     <h4>Each of the pictures below has a <span class="whole">road</span>, outlined with a blue box. Notice that each <span class="whole">road</span> also has a <span class="part">dirt</span>. The <span class="part">dirt</span> is outlined with a red box.</h4>
@@ -223,7 +212,6 @@
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/road_dirt/2400185.png" width="360px"/>
                     <img src="https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/road_dirt/2406409.png" width="360px"/>
                 </div>
-                <br />
                 <div>
                     <h4>Now consider any <span class="whole">road</span>, not the particular ones pictured. If the <span class="whole">road</span> is <span class="jj">open</span>, which of the following is true?</h4>
                     <input type="radio" name="response_road_dirt_open" value="guaranteed" required><label>The <span class="part">dirt</span> must also be <span class="jj">open</span></label><br />
@@ -237,7 +225,6 @@
                     <input type="checkbox" name="word-nonsense_road_dirt_open" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pw-nonsense_road_dirt_open" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">road</span> to have a <span class="part">dirt</span></label><br />
                 </div>
-                <br />
 
                 <p><input type='submit' id='submitButton' value='Submit' /></p></form> 
 
@@ -249,14 +236,16 @@
                 for (i = 0; i < coll.length; i++) {
                     coll[i].addEventListener("click", function() {
                         this.classList.toggle("active");
-                        console.log("okay");
-                        console.log(this);
                         var content = this.previousElementSibling;
-                        console.log(content);
                         if (content.style.display !== "none") {
                             content.style.display = "none";
                         } else {
                             content.style.display = "block";
+                        }
+                        if (this.innerText === 'Collapse instructions') {
+                            this.innerText = 'Show instructions';
+                        } else {
+                            this.innerText = 'Collapse instructions';
                         }
                     });
                 }
