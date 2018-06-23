@@ -43,7 +43,7 @@ def reload_template(whole, part):
 
     #basic logic for a vs. an
     #det = 'an' if part[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
-    for span in form.findChildren('div')[0].h4.findChildren('span'):
+    for span in form.findChildren('div')[2].h4.findChildren('span'):
         new_span = replace_template(soup, span, whole, part)
         span.replace_with(new_span)
     return prompt, full, soup, form
@@ -83,6 +83,8 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
         )
         w.writerow([title, "https://worker.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
     else:
+        with open("page_%s_%s.html" % (whole, part), 'w') as of:
+            of.write(form_str)
         w.writerow([title, "https://worker.mturk.com/mturk/preview?groupId=1", '2', whole, part, ';'.join(jjs)])
 
 if __name__ == "__main__":
@@ -96,7 +98,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ############# AWS STUFF #################
-    with open('/home/jamesm/.aws/credentials.csv') as f:
+    with open('/home/jamesm/.aws/credentials2.csv') as f:
         r = csv.reader(f)
         next(r)
         creds = next(r)
@@ -150,6 +152,7 @@ if __name__ == "__main__":
         for num_ex,((whole, part), jjs) in tqdm(enumerate(sorted(pw2jjs.items(), key=lambda x: random.random()))):
             if num_hits >= args.max_hits:
                 break
+            #safeguards
             if whole == part or '.' in whole:
                 print("whole, part: %s, %s. skipping..." % (whole, part))
                 continue
@@ -166,21 +169,25 @@ if __name__ == "__main__":
 
             num_in_hit = 0
             hit_jjs = []
+            l_i = 0
             for i, jj in enumerate(jjs):
                 #ignore those we have already annotated
                 if (whole, part, jj) in triples:
                     continue
                 #replace followup sentence
-                div = form.findChildren('div')[num_in_hit+1]
+                div = form.findChildren('div')[num_in_hit+1+2]
                 for span in div.p.findChildren('span'):
                     new_span = replace_template(soup, span, whole, part, jj)
                     span.replace_with(new_span)
 
                 #also replace radio button labels
                 for label in div.findChildren('label'):
+                    label.findPreviousSibling().attrs['id'] = str(l_i)
+                    label.attrs['for'] = str(l_i)
                     for span in label.findChildren('span'):
                         new_span = replace_template(soup, span, whole, part, jj)
                         span.replace_with(new_span)
+                    l_i += 1
 
                 hit_jjs.append(jj)
                 num_in_hit += 1
@@ -188,8 +195,8 @@ if __name__ == "__main__":
                 if num_in_hit >= args.jjs_per_hit:
                     # we have enough followups, create the HIT
                     #remove extra divs
-                    for i in range(10, num_in_hit, -1):
-                        form.findChildren('div')[i].decompose()
+                    for i in range(10-1, num_in_hit-1, -1):
+                        form.findChildren('div', {'class': 'question'})[i].decompose()
                     make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                     num_hits += 1
                     num_in_hit = 0
@@ -207,8 +214,8 @@ if __name__ == "__main__":
             #we're done, make a HIT with any remaining
             if num_in_hit > 0:
                 #remove extra divs
-                for i in range(10, num_in_hit, -1):
-                    form.findChildren('div')[i].decompose()
+                for i in range(10-1, num_in_hit-1, -1):
+                    form.findChildren('div', {'class', 'question'})[i].decompose()
                 make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                 num_hits += 1
                 if num_hits % 100 == 0:

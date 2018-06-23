@@ -122,26 +122,11 @@ if __name__ == "__main__":
     examples = [row for row in csv.reader(open('/home/jamesm/commonsense-part-whole/data/candidates/%s' % (args.candidate_file)))]
     lem = WordNetLemmatizer()
     #parse examples into (whole, part) : {jjs} lookup
-    pw2jjs_raw = defaultdict(set)
+    pw2jjs = defaultdict(set)
     for whole, part, jj in examples:
         whole_lem = lem.lemmatize(whole.replace(' ', '_')).replace('_', ' ')
         part_lem = lem.lemmatize(part.replace(' ', '_')).replace('_', ' ')
-        pw2jjs_raw[(whole_lem, part_lem)].add(jj)
-
-    #just lemmatize everything
-    #pw2jjs = defaultdict(set)
-    #for whole, part, jj in examples:
-    #    whole_lem = lem.lemmatize(whole.replace(' ', '_'))
-    #    part_lem = lem.lemmatize(part.replace(' ', '_'))
-    #    if (whole_lem, part_lem) in pw2jjs_raw:
-    #        pw2jjs[(whole_lem, part_lem)].update(pw2jjs_raw[(whole, part)])
-    #    elif (whole, part_lem) in pw2jjs_raw:
-    #        pw2jjs[(whole, part_lem)].update(pw2jjs_raw[(whole, part)])
-    #    elif (whole_lem, part) in pw2jjs_raw:
-    #        pw2jjs[(whole_lem, part)].update(pw2jjs_raw[(whole, part)])
-    #    else:
-    #        pw2jjs[(whole, part)].update(pw2jjs_raw[(whole, part)])
-    pw2jjs = pw2jjs_raw
+        pw2jjs[(whole_lem, part_lem)].add(jj)
 
     wholes = set([w for w,_ in pw2jjs.keys()])
     parts = set([p for _,p in pw2jjs.keys()])
@@ -169,7 +154,6 @@ if __name__ == "__main__":
             if prompt is None:
                 continue
 
-            #TODO: remove this
             if num_ex > args.max_pws:
                 break
 

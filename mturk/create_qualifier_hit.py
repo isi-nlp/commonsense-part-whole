@@ -5,7 +5,7 @@ import xmltodict
 
 MTURK_URL = 'https://mturk-requester.us-east-1.amazonaws.com'
 
-with open('/home/jamesm/.aws/credentials.csv') as f:
+with open('/home/jamesm/.aws/credentials2.csv') as f:
     r = csv.reader(f)
     next(r)
     creds = next(r)
