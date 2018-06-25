@@ -138,8 +138,8 @@ if __name__ == "__main__":
         w.writerow(['title', 'url', 'HITId', 'whole', 'part', 'jj'])
 
         print("making HITs...")
-        #iterate in random order
         num_hits = 0
+        #iterate in random order
         for num_ex,((whole, part), jjs) in tqdm(enumerate(sorted(pw2jjs.items(), key=lambda x: random.random()))):
             if num_hits >= args.max_hits:
                 break
@@ -205,8 +205,7 @@ if __name__ == "__main__":
                     form.findChildren('div', {'class': 'question'})[i].decompose()
                 make_hit(whole, part, hit_jjs, full, str(soup), w, args.title, args.dry_run)
                 num_hits += 1
-                if num_hits % 100 == 0:
-                    print("num hits: %d" % num_hits)
+            print("num hits: %d" % num_hits)
 
 # Remember to modify the URL above when you're publishing
 # HITs to the live marketplace.

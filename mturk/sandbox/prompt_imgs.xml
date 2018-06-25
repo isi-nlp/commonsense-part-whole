@@ -79,6 +79,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense1" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense1" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense1" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense1" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -92,6 +93,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense2" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense2" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense2" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense2" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -105,6 +107,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense3" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense3" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense3" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense3" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -118,6 +121,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense4" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense4" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense4" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense4" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -131,6 +135,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense5" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense5" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense5" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense5" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -144,6 +149,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense6" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense6" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense6" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense6" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -157,6 +163,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense7" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense7" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense7" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense7" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -170,6 +177,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense8" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense8" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense8" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense8" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -183,6 +191,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense9" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense9" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense9" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense9" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <div class="question">
@@ -196,6 +205,7 @@
                     <hr />
                     <input type="checkbox" name="wjj-nonsense10" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="word-nonsense10" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense10" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense10" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
                 </div>
                 <p lang="en-US" style="color: rgb(34, 34, 34)"><b>(Optional)</b> Please provide any comments that you have about this HIT. Thanks for doing our HIT! We appreciate your input!</p>
@@ -222,6 +232,8 @@
                             this.innerText = 'Collapse instructions';
                         }
                     });
+                    //collapse by default
+                    coll[i].click()
                 }
                 
             </script>

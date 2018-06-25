@@ -1,69 +1,238 @@
-    <!DOCTYPE html>                                                       
+ <!DOCTYPE html>                                                       
     <html>
         <head>
             <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/> 
             <script type='text/javascript' src='https://s3.amazonaws.com/mturk-public/externalHIT_v1.js'></script>
             <style>
             div {
-                background-color: powderblue;
-                margin-bottom: 20px;
-                display: inline-block;
+                background-color: #e0e0e0;
+                margin-bottom: 5px;
+                display: block;
+                    padding:5px;
+            }
+            div.instructions {
+                display: block;
+            }
+            label {
+                font-size: 14px;
+                vertical-align: middle;
+            }
+            input {
+                vertical-align: middle;
+            }
+            h4 {
+                margin-bottom: 4px
+            }
+            h2 {
+                margin-bottom: 0px
+            }
+            span {
+                font-weight: bold;
+            }
+            span.part {
+                color: red;
+            }
+            span.whole {
+                color: blue;
+            }
+            span.jj {
+                color: green;
             }
             </style>
         </head>
         <body> 
             <form name='mturk_form' method='post' id='mturk_form' action='https://www.mturk.com/mturk/externalSubmit'><input type='hidden' value='' name='assignmentId' id='assignmentId'/>
+                <div>
+                    <h2>Commonsense reasoning task</h2>
+                    <div class="instructions">
+                        <p>The purpose of this task is to answer common-sense questions about nouns and adjectives. </p>
+                        <p>You will read a short sentence and answer followup questions. If you can imagine an interpretation in which a question makes sense, use that interpretation. If you aren't sure, just make your best guess.</p>
+                        <p>The answer options and some examples are shown below:</p>
+                        <ul>
+                            <li>Consider a <span class="jj">young</span> <span class="whole">child</span>'s <span class="part">eye</span>. Because the <span class="whole">child</span> is <span class="jj">young</span>, the <span class="part">eye</span> <strong>must also be</strong> young.
+                            <li>Consider a <span class="jj">blue</span> <span class="whole">sweatshirt</span>'s <span class="part">hood</span>. Because the <span class="whole">sweatshirt</span> is <span class="jj">blue</span>, the <span class="part">hood</span> <strong>is probably</strong> blue.
+                            <li>Consider a <span class="jj">black</span> <span class="whole">jet</span>'s <span class="part">wheel</span>. The <span class="part">wheel</span> might be <span class="jj">black</span>, but this is <strong>unrelated</strong> to the <span class="whole">jet</span> being black.
+                            <li>Consider a <span class="jj">warm</span> <span class="whole">bed</span>'s <span class="part">frame</span>. Although the <span class="whole">bed</span> is <span class="jj">warm</span>, the <span class="part">frame</span> is <strong>unlikely to be</strong> warm.
+                            <li>Consider a <span class="jj">black</span> <span class="whole">car</span>'s <span class="part">light</span>. Although the <span class="whole">car</span> is <span class="jj">black</span>, the <span class="part">light</span> <strong>cannot be</strong> black.
+                        </ul>
+                    </div>
+                    <button type='button' class="collapsible">Collapse instructions</button>
+                </div>
+                <div>
+                    <h4>There is a <span class='whole'>WHOLE</span>. The <span class='whole'>WHOLE</span> has a <span class='part'>PART</span>.</h4>
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response1" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response1" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense1" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense1" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense1" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense1" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response2" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response2" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense2" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense2" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense2" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense2" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response3" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response3" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense3" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense3" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense3" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense3" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response4" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response4" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense4" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense4" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense4" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense4" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response5" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response5" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense5" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense5" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense5" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense5" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response6" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response6" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense6" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense6" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense6" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense6" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response7" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response7" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense7" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense7" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense7" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense7" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response8" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response8" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense8" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense8" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense8" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense8" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response9" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response9" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense9" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense9" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense9" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense9" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <div class="question">
+                    <p>Which of the following is true?</p>
+                    <input type="radio" name="response10" value="guaranteed" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> must also be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="probably" required><label>Because the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is probably <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="unrelated" required><label>The <span class="part">PART</span> might be <span class="jj">ADJECTIVE</span>, but this is unrelated to the <span class="whole">WHOLE</span> being <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="unlikely" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> is unlikely to be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="impossible" required><label>Although the <span class="whole">WHOLE</span> is <span class="jj">ADJECTIVE</span>, the <span class="part">PART</span> cannot be <span class="jj">ADJECTIVE</span></label><br />
+                    <input type="radio" name="response10" value="nonsense" required><label>I don't know (check one of the boxes below)</label><br />
+                    <hr />
+                    <input type="checkbox" name="wjj-nonsense10" value="wjj-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="word-nonsense10" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
+                    <input type="checkbox" name="pjj-nonsense10" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
+                    <input type="checkbox" name="pw-nonsense10" value="pw-nonsense"/><label>I don't know what it means for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                </div>
+                <p lang="en-US" style="color: rgb(34, 34, 34)"><b>(Optional)</b> Please provide any comments that you have about this HIT. Thanks for doing our HIT! We appreciate your input!</p>
 
-                <div>
-                    Instructions: You will see an initial sentence followed by a set of followup statements. Please choose the option from the dropdown that best describes the possibility of each followup statement. If you think a followup statement is invalid, check one of the boxes.
-                    <h4>Initial sentence: There is a red car.</h4>
-                </div>
-                <br />
+                <p><textarea cols="80" name="comment" rows="4"></textarea></p>
 
-                <div>
-                    The following statement is 
-                    <select>
-                        <option value='very likely'>very likely</option>
-                        <option value='likely'>likely</option>
-                        <option value='plausible'>plausible</option>
-                        <option value='technically possible'>technically possible</option>
-                    </select> 
-                    to be true given the context of the initial sentence.
-                    <p><strong>The car's engine is red.</strong></p>
-                    <input type='checkbox' name="nonsense">I don't think a "car" can have an "engine" <br />
-                    <input type='checkbox' name="nonsense">I don't think an "engine" can ever be "red" 
-                </div>
-                <br />
-                <div>
-                    The following statement is 
-                    <select>
-                        <option value='very likely'>very likely</option>
-                        <option value='likely'>likely</option>
-                        <option value='plausible'>plausible</option>
-                        <option value='technically possible'>technically possible</option>
-                    </select> 
-                    to be true given the context of the initial sentence.
-                    <h4>The car's wheels are red.</h4>
-                    <input type='checkbox' name="nonsense">I don't think a "car" can have "wheels" <br />
-                    <input type='checkbox' name="nonsense">I don't think "wheels" can ever be "red" 
-                </div>
-                <br />
-                <div>
-                    The following statement is 
-                    <select>
-                        <option value='very likely'>very likely</option>
-                        <option value='likely'>likely</option>
-                        <option value='plausible'>plausible</option>
-                        <option value='technically possible'>technically possible</option>
-                    </select> 
-                    to be true given the context of the initial sentence.
-                    <h4>The car's door is red.</h4>
-                    <input type='checkbox' name="nonsense">I don't think a "car" can have a "door" <br />
-                    <input type='checkbox' name="nonsense">I don't think a "door" can ever be "red" 
-                </div>
+                
+                
                 <p><input type='submit' id='submitButton' value='Submit' /></p></form> 
 
-            <script language='Javascript'>turkSetAssignmentID();</script>
+            <script language='Javascript'>
+                turkSetAssignmentID();
+                var coll = document.getElementsByClassName("collapsible");
+                var i;
 
+                for (i = 0; i < coll.length; i++) {
+                    coll[i].addEventListener("click", function() {
+                        this.classList.toggle("active");
+                        var content = this.previousElementSibling;
+                        if (content.style.display !== "none") {
+                            content.style.display = "none";
+                        } else {
+                            content.style.display = "block";
+                        }
+                        if (this.innerText === 'Collapse instructions') {
+                            this.innerText = 'Show instructions';
+                        } else {
+                            this.innerText = 'Collapse instructions';
+                        }
+                    });
+                    //collapse by default
+                    coll[i].click()
+                }
+            </script>
         </body>
     </html>
+
