@@ -37,6 +37,10 @@ form = "<![CDATA[\n" + str(soup) + "\n\n]]>" #dumb hack to make the unparse() ou
 full['HTMLQuestion']['HTMLContent'] = form
 prompt = html.unescape(xmltodict.unparse(full))
 
+#with open('blah.html', 'w') as of:
+#    of.write(str(soup))
+#sys.exit(0)
+
 title = "Common sense visual reasoning - 9 questions"
 qualifier_hit = mturk.create_hit(
                                  Title = title,

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--num-assignments", dest="num_assignments", type=int, default=300, help="how many assignments there were for this batch (default: 300)")
     args = parser.parse_args()
 
-    with open('/home/jamesm/.aws/credentials.csv') as f:
+    with open('/home/jamesm/.aws/credentials2.csv') as f:
         r = csv.reader(f)
         next(r)
         creds = next(r)
@@ -46,38 +46,43 @@ if __name__ == "__main__":
                 cw = csv.writer(cf)
                 r = csv.reader(f)
                 header = next(r)
-                for i in range(args.num_assignments):
-                    header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
-                w.writerow(header)
                 hit_ids = set()
 
                 row = next(r)
                 hit_id = row[2]
                 print(hit_id)
 
-                worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status])
-
+                worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status], MaxResults=100)
                 responses = defaultdict(list)
                 worker_ids = defaultdict(list)
-                comments = []
-                if worker_results['NumResults'] > 0:
-                    for assignment in worker_results['Assignments']:
-                        worker_id = assignment['WorkerId']
-                        response = defaultdict(str)
-                        xml_doc = xmltodict.parse(assignment['Answer'])
+                while 'NextToken' in worker_results.keys():
+                    next_tok = worker_results['NextToken']
+                    print("processing %d responses..." % worker_results['NumResults'])
+                    comments = []
+                    if worker_results['NumResults'] > 0:
+                        for assignment in worker_results['Assignments']:
+                            worker_id = assignment['WorkerId']
+                            response = defaultdict(str)
+                            xml_doc = xmltodict.parse(assignment['Answer'])
 
-                        triples = set()
-                        for i,answer_field in enumerate(xml_doc['QuestionFormAnswers']['Answer']):
-                            response, comment, triple = update_response(response, answer_field['QuestionIdentifier'], answer_field['FreeText'])
-                            triples.add(triple)
-                            if comment is not None and comment != '':
-                                print(comment)
-                                comments.append((worker_id, comment))
-                        for triple in triples:
-                            responses[triple].append(response[triple])
-                            worker_ids[triple].append(worker_id)
-                else:
-                    print("No results ready yet")
+                            triples = set()
+                            for i,answer_field in enumerate(xml_doc['QuestionFormAnswers']['Answer']):
+                                response, comment, triple = update_response(response, answer_field['QuestionIdentifier'], answer_field['FreeText'])
+                                triples.add(triple)
+                                if comment is not None and comment != '':
+                                    print(comment)
+                                    comments.append((worker_id, comment))
+                            for triple in triples:
+                                responses[triple].append(response[triple])
+                                worker_ids[triple].append(worker_id)
+                    else:
+                        print("No results ready yet")
+
+                    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status], MaxResults=100, NextToken=next_tok)
+
+                for i in range(len(list(responses.values())[0])):
+                    header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
+                w.writerow(header)
 
                 for triple in responses.keys():
                     to_write = row[:3]
@@ -90,3 +95,4 @@ if __name__ == "__main__":
 
                 for worker, comment in comments:
                     cw.writerow([hit_id, worker, whole, part, comment])
+
