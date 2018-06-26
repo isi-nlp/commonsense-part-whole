@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("hit_file", type=str, help="path to the qualifier batch")
     parser.add_argument("result_file", type=str, help="path to save the retrieved annotations")
-    parser.add_argument("status", choices=['Submitted', 'Approved', 'Rejected'], help="What kind of results you want")
+    parser.add_argument("status", nargs='+', choices=['Submitted', 'Approved', 'Rejected'], help="What kind of results you want")
     parser.add_argument("--num-assignments", dest="num_assignments", type=int, default=300, help="how many assignments there were for this batch (default: 300)")
     args = parser.parse_args()
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                 hit_id = row[2]
                 print(hit_id)
 
-                worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status], MaxResults=100)
+                worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=args.status, MaxResults=100)
                 responses = defaultdict(list)
                 worker_ids = defaultdict(list)
                 while 'NextToken' in worker_results.keys():
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                     else:
                         print("No results ready yet")
 
-                    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status], MaxResults=100, NextToken=next_tok)
+                    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=args.status, MaxResults=100, NextToken=next_tok)
 
                 for i in range(len(list(responses.values())[0])):
                     header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
