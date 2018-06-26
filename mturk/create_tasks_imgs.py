@@ -38,7 +38,7 @@ def reload_template(whole, part):
         print("dir not found: %s" % pw)
         return None, None, None, None
 
-    for i,img in enumerate(form.findChildren('div')[0].findChildren('img')):
+    for i,img in enumerate(form.findChildren('div')[2].findChildren('img')):
         img['src'] = 'https://s3-us-west-1.amazonaws.com/commonsense-mturk-images/%s/%s' % (pw, new_srcs[i])
 
     #basic logic for a vs. an
@@ -59,9 +59,9 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
                                    Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
                                    Keywords = 'images, quick, question answering',
                                    Reward = '0.03',
-                                   MaxAssignments = 5,
+                                   MaxAssignments = 3,
                                    LifetimeInSeconds = 60*60*24*2, #2 days
-                                   AssignmentDurationInSeconds = 60*10, #10 minutes
+                                   AssignmentDurationInSeconds = 60*20, #20 minutes
                                    AutoApprovalDelayInSeconds = 60*60*4, #4 hours
                                    Question = prompt,
                                    QualificationRequirements = [
@@ -78,6 +78,10 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
                                          'IntegerValues': [
                                              98,
                                          ]
+                                     },
+                                     {
+                                         'QualificationTypeId': '3J4VHEWGB82EEK2P3BTS7BQAJN38VS',
+                                         'Comparator': 'Exists'
                                      }
                                    ]
         )
@@ -119,13 +123,14 @@ if __name__ == "__main__":
     #########################################
 
     triples = set()
-    result_dir = '/home/jamesm/commonsense-part-whole/mturk/hit_results/'
-    for fn in os.listdir(result_dir):
-        with open('%s/%s' % (result_dir, fn)) as f:
-            r = csv.reader(f)
-            next(r)
-            for row in r:
-                triples.add(tuple(row[3:6]))
+    #result_dir = '/home/jamesm/commonsense-part-whole/mturk/hit_results/'
+    #for fn in os.listdir(result_dir):
+    #    with open('%s/%s' % (result_dir, fn)) as f:
+    #        r = csv.reader(f)
+    #        next(r)
+    #        for row in r:
+    #            triples.add(tuple(row[3:6]))
+    pws_done = set([tuple(row) for row in csv.reader(open('/home/jamesm/commonsense-part-whole/mturk/pws_done.csv'))])
 
     print("reading examples")
     examples = [row for row in csv.reader(open('/home/jamesm/commonsense-part-whole/data/candidates/%s' % (args.candidate_file)))]
@@ -160,6 +165,8 @@ if __name__ == "__main__":
  
             whole = whole.replace('_', ' ')
             part = part.replace('_', ' ')
+            if (whole, part) in pws_done:
+                continue
             prompt, full, soup, form = reload_template(whole, part)
             if prompt is None:
                 continue

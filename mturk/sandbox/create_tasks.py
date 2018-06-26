@@ -43,9 +43,9 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
     if not dryrun:
         new_hit = mturk.create_hit(
                                    Title = title,
-                                   Description = 'Choose the option that best describes the possibility of each followup statement given an initial sentence.',
+                                   Description = 'Choose the option that best describes the possibility of each followup statement given an initial premise.',
                                    Keywords = 'text, quick, labeling',
-                                   Reward = '0.02',
+                                   Reward = '0.03',
                                    MaxAssignments = 3,
                                    LifetimeInSeconds = 60*60*24, #1 day
                                    AssignmentDurationInSeconds = 60*5, #5 minutes
