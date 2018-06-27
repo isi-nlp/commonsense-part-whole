@@ -1,5 +1,5 @@
 """
-    Given a triple, predicts the label given statistics from Google n-grams on the frequency of JJ amod PART
+    Given a file of triples, predicts the labels given statistics from Google n-grams on the frequency of JJ amod PART
 """
 import argparse, csv, operator
 from collections import OrderedDict

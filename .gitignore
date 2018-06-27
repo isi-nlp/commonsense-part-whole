@@ -108,6 +108,9 @@ data/adjectives
 data/brysbaert
 data/conceptnet
 data/excel
+data/gutenberg
+data/gutentag
+data/joci
 data/nell
 data/ngrams
 data/nouns
@@ -120,6 +123,12 @@ data/word2vec
 data/yago
 figs/
 
-#HIT sandbox data
+#HIT data
 mturk/sandbox/hit_batches
 mturk/sandbox/hit_results
+mturk/hit_batches
+mturk/hit_results
+mturk/*.html
+mturk/*.csv
+mturk/sandbox/*.html
+mturk/sandbox/*.csv

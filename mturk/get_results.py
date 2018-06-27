@@ -20,11 +20,11 @@ def update_responses(responses, q_id, free_text):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("batch_id", type=str, help="ID for the batch you want results for")
-    parser.add_argument("status", choices=['Submitted', 'Approved', 'Rejected'], help="What kind of results you want")
+    parser.add_argument("status", nargs='+', choices=['Submitted', 'Approved', 'Rejected'], help="What kind of results you want")
     parser.add_argument("--num-assignments", dest="num_assignments", type=int, default=3, help="how many assignments there were for this batch (default: 3)")
     args = parser.parse_args()
 
-    with open('/home/jamesm/.aws/credentials.csv') as f:
+    with open('/home/jamesm/.aws/credentials2.csv') as f:
         r = csv.reader(f)
         next(r)
         creds = next(r)
@@ -49,13 +49,16 @@ if __name__ == "__main__":
                     header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
                 w.writerow(header)
                 hit_ids = set()
+                num_results = []
                 for row in r:
                     hit_id = row[2]
                     jjs = row[-1].split(';')
                     pw = tuple(row[3:5])
-                    print(hit_id)
 
-                    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=[args.status])
+                    worker_results = mturk.list_assignments_for_hit(HITId=hit_id, AssignmentStatuses=args.status)
+                    num_results.append(worker_results['NumResults'])
+                    if len(num_results) % 100 == 0:
+                        print("retrieved %d results..." % len(num_results))
 
                     responses = defaultdict(list)
                     worker_ids = defaultdict(list)
@@ -71,21 +74,19 @@ if __name__ == "__main__":
                                 for i,answer_field in enumerate(xml_doc['QuestionFormAnswers']['Answer']):
                                     assgn_responses, comment = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
                                     if comment is not None and comment != '':
-                                        print(comment)
                                         comments[pw].append((worker_id, comment))
                             else:
                                 # One field found in HIT layout
                                 answer_field = xml_doc['QuestionFormAnswers']['Answer']
                                 assgn_responses, comment = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
                                 if comments is not None and comment != '':
-                                    print(comment)
                                     comments[pw].append((worker_id, comment))
                             for jj, res in zip(jjs, assgn_responses):
                                 responses[jj].append(res)
                                 worker_ids[jj].append(worker_id)
                     else:
-                        print("No results ready yet")
                         continue
+                    print("HITs with no completed assignments: %d/%d" % (sum(np.array(num_results) == 0), len(num_results)))
 
                     for jj, res in zip(jjs, responses):
                         to_write = row[:5]
@@ -94,7 +95,6 @@ if __name__ == "__main__":
                             to_write.append(res)
                             to_write.append(worker_id)
                         w.writerow(to_write)
-                    print()
 
                     for (part, whole), worker_comments in comments.items():
                         for worker, comment in worker_comments:

@@ -10,6 +10,7 @@ if __name__ == "__main__":
     parser.add_argument("num_assignments", type=int, help="number of turkers on each HIT")
     parser.add_argument("--weights", required=False, choices=['linear', 'quadratic', 'None'], default='linear', help="weighting to use for cohen's kappa metric (default: linear)")
     parser.add_argument("--two-class", dest="two_class", const=True, action="store_const", help="get two-class metrics instead of full-range")
+    parser.add_argument("--pjj-equals-impossible", dest="pjj_equals_impossible", const=True, action="store_const", help="flag to set pjj-nonsense equal to impossible")
     args = parser.parse_args()
     args.weights = None if args.weights == 'None' else args.weights
 
@@ -17,6 +18,9 @@ if __name__ == "__main__":
         str2score = {'guaranteed': 1, 'probably': 1, 'unrelated': 0, 'unlikely': 0, 'impossible': 0}
     else:
         str2score = {'guaranteed': 4, 'probably': 3, 'unrelated': 2, 'unlikely': 1, 'impossible': 0}
+    if args.pjj_equals_impossible:
+        str2score['pjj-nonsense'] = 0
+
     with open(args.results_file) as f:
         r = csv.reader(f)
         #header
@@ -38,19 +42,21 @@ if __name__ == "__main__":
         x, y = response_arrs[i], response_arrs[j]
         x2, y2 = [], []
         for x_i, y_i in zip(x, y):
-            if x_i is not None and y_i is not None and 'nonsense' not in x_i and 'nonsense' not in y_i:
-                x2.append(str2score[x_i])
-                y2.append(str2score[y_i])
+            if x_i is not None and y_i is not None:
+                if 'nonsense' not in x_i or (args.pjj_equals_impossible and x_i == 'pjj-nonsense'):
+                    if 'nonsense' not in y_i or (args.pjj_equals_impossible and y_i == 'pjj-nonsense'):
+                        x2.append(str2score[x_i])
+                        y2.append(str2score[y_i])
         k = cohen_kappa_score(x2, y2, weights=args.weights)
         ks.append(k)
         rho, pval = spearmanr(x2, y2)
         rs.append(rho)
     print("#" * 10 + " COHEN'S KAPPA  " + "#" * 10)
     print(ks)
-    print("AVERAGE: %f +/- %f" % (np.mean(ks), np.std(ks)))
+    print("AVERAGE: %f +/- %f" % (np.nanmean(ks), np.nanstd(ks)))
     print()
     print("#" * 10 + " SPEARMAN'S RHO " + "#" * 10)
     print(rs)
-    print("AVERAGE: %f +/- %f" % (np.mean(rs), np.std(rs)))
+    print("AVERAGE: %f +/- %f" % (np.nanmean(rs), np.nanstd(rs)))
         
 

@@ -108,11 +108,19 @@ if __name__ == "__main__":
 
     if args.live and cont == 'yes':
         print("assigning qualifications")
+        prev_qualified = []
+        response = mturk.list_workers_with_qualification_type(QualificationTypeId='3J4VHEWGB82EEK2P3BTS7BQAJN38VS', MaxResults=100)
+        while response['NumResults'] > 0:
+            tok = response['NextToken']
+            prev_qualified.extend([qual['WorkerId'] for qual in response['Qualifications']])
+            response = mturk.list_workers_with_qualification_type(QualificationTypeId='3J4VHEWGB82EEK2P3BTS7BQAJN38VS', MaxResults=100, NextToken=tok)
+
     qualified_workers = []
     for worker in agreements['kappa'].keys():
         if agreements[args.metric][worker] > args.threshold:
             qualified_workers.append(worker)
             if args.live:
                 print(worker)
-                mturk.associate_qualification_with_worker(QualificationTypeId=qual_id, WorkerId=worker)
+                if worker not in prev_qualified:
+                    mturk.associate_qualification_with_worker(QualificationTypeId=qual_id, WorkerId=worker)
     print("Number of qualified workers: %d/%d" % (len(qualified_workers), len(agreements['kappa'].keys())))
