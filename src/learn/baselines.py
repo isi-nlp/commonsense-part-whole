@@ -40,13 +40,13 @@ def _preds_for_file(noun2jjs, fname, binary):
                 jj_order = [jj for jj, count in sorted(noun2jjs[part].items(), key=operator.itemgetter(1), reverse=True)]
                 if jj in jj_order:
                     norm_rank = jj_order.index(jj) / len(jj_order)
-                    #guess impossible by default (if never found)
-                    pred = 0
-                    for i in range(5,1,-1):
+                    #guess unrelated by default (if never found)
+                    pred = 2
+                    for i in range(4,0,-1):
                         #use this exponential threshold thing, idk
                         thresh = np.exp2(-i)
                         if norm_rank < thresh:
-                            pred = i-1
+                            pred = i
                             break
                 else:
                     #impossible if not found in list
@@ -204,3 +204,4 @@ if __name__ == "__main__":
                                                 precision_score(gold_bin_test, stats_bin_test, average='weighted'),
                                                 recall_score(gold_bin_test, stats_bin_test, average='weighted'),
                                                 f1_score(gold_bin_test, stats_bin_test, average='weighted')))
+    import pdb; pdb.set_trace()
