@@ -1,6 +1,7 @@
 import argparse
 import boto3
 import csv
+import numpy as np
 import xmltodict
 from collections import defaultdict
 
@@ -50,6 +51,7 @@ if __name__ == "__main__":
                 w.writerow(header)
                 hit_ids = set()
                 num_results = []
+                times = defaultdict(list) #worker: times
                 for row in r:
                     hit_id = row[2]
                     jjs = row[-1].split(';')
@@ -68,6 +70,7 @@ if __name__ == "__main__":
                             worker_id = assignment['WorkerId']
                             assgn_responses = [None] * len(jjs)
                             xml_doc = xmltodict.parse(assignment['Answer'])
+                            times[worker_id].append(((assignment['SubmitTime'] - assignment['AcceptTime']).total_seconds(), assignment['SubmitTime'].timestamp()))
 
                             if type(xml_doc['QuestionFormAnswers']['Answer']) is list:
                                 # Multiple fields in HIT layout
@@ -86,7 +89,6 @@ if __name__ == "__main__":
                                 worker_ids[jj].append(worker_id)
                     else:
                         continue
-                    print("HITs with no completed assignments: %d/%d" % (sum(np.array(num_results) == 0), len(num_results)))
 
                     for jj, res in zip(jjs, responses):
                         to_write = row[:5]
@@ -99,3 +101,7 @@ if __name__ == "__main__":
                     for (part, whole), worker_comments in comments.items():
                         for worker, comment in worker_comments:
                             cw.writerow([hit_id, worker, whole, part, comment])
+    print("HITs with no completed assignments: %d/%d" % (sum(np.array(num_results) == 0), len(num_results)))
+    tms = np.concatenate(np.array([[e for e,s in val] for val in times.values()]))
+    print("Average time per HIT: %f" % np.mean(tms))
+    print("Median time per HIT: %f" % np.median(tms))

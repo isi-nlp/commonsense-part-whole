@@ -11,12 +11,12 @@ def crawl(dr, n_bks):
             #found a book, download it
             fname = sd.split('/')[-1]
             dummy = []
+            book = ftp.retrlines('RETR %s' % sd, dummy.append)
             with open('%s/%s' % (BASE_DIR, fname), 'w') as of:
-                book = ftp.retrlines('RETR %s' % sd, dummy.append)
-                of.write(book)
-                n_bks += 1
-                if n_bks % 1 == 0:
-                    print("just wrote %s. %d books retrieved..." % (fname, n_bks))
+                of.write("\n".join(dummy))
+            n_bks += 1
+            if n_bks % 1 == 0:
+                print("just wrote %s. %d books retrieved..." % (fname, n_bks))
         elif 'old' not in sd:
             subsubdirs = ftp.nlst(sd)
             if not (len(subsubdirs) == 1 and subsubdirs[0] == sd):
