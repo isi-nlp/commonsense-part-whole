@@ -46,38 +46,42 @@ class TripleDataset(Dataset):
         return triple, self.triples.iloc[idx][lname]
 
 class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, binary=False, embed_file=None, word2ix=None):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, binary=False, embed_file=None, word2ix=None):
         super(TripleMLP, self).__init__()
-        self.elmo = True
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.nonlinearity = nonlinearity
+        self.dropout = dropout
+        self.binary = binary
 
         #set up embedding layer, either with elmo or from scratch
+        self.elmo = True
         if embed_file:
             self.elmo_embeds = h5py.File(embed_file, 'r')
             self.embed_size = 1024
         else:
             #add one for unk
-            self.embed = nn.Embedding(len(word2ix)+1, hidden_size)
-            self.embed_size = hidden_size
+            self.embed = nn.Embedding(len(word2ix)+1, self.hidden_size)
+            self.embed_size = self.hidden_size
             self.elmo = False
             self.word2ix = word2ix
 
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.nonlinearity = nonlinearity
-        self.binary = binary
-
+        #first hidden layer
         seq = [nn.Linear(self.embed_size*3, self.hidden_size)]
         if self.nonlinearity == 'tanh':
             seq.append(nn.Tanh())
         else:
             seq.append(nn.ReLU())
+        seq.append(nn.Dropout(p=self.dropout))
 
+        #more hidden layers
         for _ in range(self.num_layers-1):
             seq.append(nn.Linear(self.hidden_size, self.hidden_size))
             if self.nonlinearity == 'tanh':
                 seq.append(nn.Tanh())
             else:
                 seq.append(nn.ReLU())
+            seq.append(nn.Dropout(p=self.dropout))
 
         #output
         out_dim = 2 if self.binary else 5
@@ -102,7 +106,7 @@ class TripleMLP(nn.Module):
                 inp.append(torch.cat(embeds))
             else:
                 inp.append(embeds.view(-1))
-        inp = torch.stack(inp)
+        inp = F.dropout(torch.stack(inp), p=self.dropout)
         pred = self.MLP(inp)
         loss = F.nll_loss(pred, torch.LongTensor(labels))
         return pred, loss
@@ -207,14 +211,15 @@ if __name__ == "__main__":
     parser.add_argument('file', type=str, help='path to train file')
     parser.add_argument('--embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
-    parser.add_argument('--hidden_size', type=int, default=128, help='MLP hidden size')
-    parser.add_argument('--num_layers', type=int, default=2, help='MLP number of hidden layers')
+    parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size')
+    parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers')
     parser.add_argument('--nonlinearity', choices=['relu', 'tanh'], default='relu', help='nonlinearity for MLP')
     parser.add_argument('--batch-size', dest='batch_size', type=int, default=16, help='batch size for training')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-    parser.add_argument('--criterion', choices=['acc', 'prec', 'rec', 'f1', 'mse', 'spearman'], default='mse', help='metric for early stopping')
+    parser.add_argument('--dropout', type=float, default=0.2, help='dropout rate')
+    parser.add_argument('--criterion', choices=['acc', 'prec', 'rec', 'f1', 'mse', 'spearman', 'loss_dev'], default='mse', help='metric for early stopping')
     parser.add_argument('--patience', type=int, default=5, help='number of epochs without dev improvement in criterion metric befor early stoping')
-    parser.add_argument('--update-embed', action='store_const', const=True, help='flag to update ELMo embeddings (TODO)')
+    parser.add_argument('--update-embed', dest='update_embed', action='store_const', const=True, help='flag to update ELMo embeddings (TODO)')
     parser.add_argument('--binary', action='store_const', const=True, help='flag to predict binary labels instead of ordinal labels')
     args = parser.parse_args()
     command = ' '.join(['python'] + sys.argv)
@@ -235,7 +240,7 @@ if __name__ == "__main__":
         word2ix = train_set.word2ix
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, binary=args.binary, embed_file=args.embed_file, word2ix=word2ix)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, word2ix=word2ix)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     metrics_tr = defaultdict(lambda: np.array([]))
