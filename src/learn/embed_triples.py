@@ -94,7 +94,7 @@ class TripleMLP(nn.Module):
         #output
         if self.loss_fn == 'cross_entropy':
             out_dim = 2 if self.binary else 5
-        elif self.loss_fn == 'mse':
+        elif self.loss_fn in ['mse', 'smooth_l1']:
             out_dim = 1
         final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * 3
         seq.append(nn.Linear(final_input, out_dim))
@@ -141,6 +141,8 @@ class TripleMLP(nn.Module):
             loss = F.cross_entropy(pred, torch.LongTensor(labels))
         elif self.loss_fn == 'mse':
             loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels))
+        elif self.loss_fn == 'smooth_l1':
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels))
         return pred, loss
 
     def combine_embeds(self, triple, embeds):
@@ -247,7 +249,7 @@ if __name__ == "__main__":
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (0 = do LogReg)')
     parser.add_argument('--nonlinearity', choices=['relu', 'tanh'], default='relu', help='nonlinearity for MLP')
-    parser.add_argument('--loss-fn', dest="loss_fn", choices=['mse', 'cross_entropy'], default='cross_entropy', help='loss to minimize')
+    parser.add_argument('--loss-fn', dest="loss_fn", choices=['mse', 'smooth_l1', 'cross_entropy'], default='cross_entropy', help='loss to minimize')
     parser.add_argument('--batch-size', dest='batch_size', type=int, default=16, help='batch size for training')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--dropout', type=float, default=0.2, help='dropout rate')
@@ -302,7 +304,7 @@ if __name__ == "__main__":
                 dev_golds.extend(labels)
                 if args.loss_fn == 'cross_entropy':
                     dev_preds.extend([pred.argmax().item() for pred in preds])
-                else:
+                elif args.loss_fn in ['mse', 'smooth_l1']:
                     dev_preds.extend([pred.round().long().item() for pred in preds])
                 losses_dv.append(loss)
 
