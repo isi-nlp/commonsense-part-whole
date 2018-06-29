@@ -58,9 +58,9 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
                                    Title = title,
                                    Description = 'View some images and choose the option that best describes the possibility of some statements about an object.',
                                    Keywords = 'images, quick, question answering',
-                                   Reward = '0.03',
+                                   Reward = '0.05',
                                    MaxAssignments = 3,
-                                   LifetimeInSeconds = 60*60*24*2, #2 days
+                                   LifetimeInSeconds = 60*60*24*7, #7 days
                                    AssignmentDurationInSeconds = 60*20, #20 minutes
                                    AutoApprovalDelayInSeconds = 60*60*4, #4 hours
                                    Question = prompt,
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument('--max-hits', default=10, dest='max_hits', type=int, help="maximum number of HITs to make")
     parser.add_argument('--max-pws', default=100000, dest='max_pws', type=int, help="maximum number of part-wholes to make HITs from")
     parser.add_argument('--dry-run', dest='dry_run', action='store_const', const=True, help='flag to not actually make HITs')
-    parser.add_argument('--jjs-per-hit', dest='jjs_per_hit', type=int, default=3, help="maximum number of questions per HIT (jj's per part-whole)")
+    parser.add_argument('--jjs-per-hit', dest='jjs_per_hit', type=int, default=10, help="maximum number of questions per HIT (jj's per part-whole)")
     args = parser.parse_args()
 
     ############# AWS STUFF #################

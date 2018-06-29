@@ -8,7 +8,8 @@
 import argparse, csv, operator
 from collections import Counter, defaultdict, OrderedDict
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from scipy.stats import spearmanr
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error
 
 def get_preds_by_ngram_stats(fname, binary=False):
     print("reading noun-adjective counts from google dependency n-grams...")
@@ -135,73 +136,104 @@ if __name__ == "__main__":
     stats_bin_dev, stats_bin_test = get_preds_by_ngram_stats(args.file, binary=True)
 
     print("#" * 20 + " FULL LABEL RESULTS " + "#" * 20)
-    print("acc, prec, rec, f1")
-    print("MOST COMMON, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, most_common_dev),
+    print("acc, prec, rec, f1, MSE, spearman")
+    print("MOST COMMON, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, most_common_dev),
                                                 precision_score(gold_dev, most_common_dev, average='weighted'),
                                                 recall_score(gold_dev, most_common_dev, average='weighted'),
-                                                f1_score(gold_dev, most_common_dev, average='weighted')))
-    print("MOST COMMON, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, most_common_test),
+                                                f1_score(gold_dev, most_common_dev, average='weighted'),
+                                                mean_squared_error(gold_dev, most_common_dev),
+                                                spearmanr(gold_dev, most_common_dev)[0]))
+    print("MOST COMMON, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, most_common_test),
                                                 precision_score(gold_test, most_common_test, average='weighted'),
                                                 recall_score(gold_test, most_common_test, average='weighted'),
-                                                f1_score(gold_test, most_common_test, average='weighted')))
-    print("whole, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, whole_dev),
+                                                f1_score(gold_test, most_common_test, average='weighted'),
+                                                mean_squared_error(gold_test, most_common_test),
+                                                spearmanr(gold_test, most_common_test)[0]))
+    print("whole, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, whole_dev),
                                                 precision_score(gold_dev, whole_dev, average='weighted'),
                                                 recall_score(gold_dev, whole_dev, average='weighted'),
-                                                f1_score(gold_dev, whole_dev, average='weighted')))
-    print("whole, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, whole_test),
+                                                f1_score(gold_dev, whole_dev, average='weighted'),
+                                                mean_squared_error(gold_dev, whole_dev),
+                                                spearmanr(gold_dev, whole_dev)[0]))
+    print("whole, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, whole_test),
                                                 precision_score(gold_test, whole_test, average='weighted'),
                                                 recall_score(gold_test, whole_test, average='weighted'),
-                                                f1_score(gold_test, whole_test, average='weighted')))
-    print("part, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, part_dev),
+                                                f1_score(gold_test, whole_test, average='weighted'),
+                                                mean_squared_error(gold_test, whole_test),
+                                                spearmanr(gold_test, whole_test)[0]))
+    print("part, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, part_dev),
                                                 precision_score(gold_dev, part_dev, average='weighted'),
                                                 recall_score(gold_dev, part_dev, average='weighted'),
-                                                f1_score(gold_dev, part_dev, average='weighted')))
-    print("part, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, part_test),
+                                                f1_score(gold_dev, part_dev, average='weighted'),
+                                                mean_squared_error(gold_dev, part_dev),
+                                                spearmanr(gold_dev, part_dev)[0]))
+    print("part, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, part_test),
                                                 precision_score(gold_test, part_test, average='weighted'),
                                                 recall_score(gold_test, part_test, average='weighted'),
-                                                f1_score(gold_test, part_test, average='weighted')))
-    print("stats, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, stats_dev),
+                                                f1_score(gold_test, part_test, average='weighted'),
+                                                mean_squared_error(gold_test, part_test),
+                                                spearmanr(gold_test, part_test)[0]))
+    print("stats, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_dev, stats_dev),
                                                 precision_score(gold_dev, stats_dev, average='weighted'),
                                                 recall_score(gold_dev, stats_dev, average='weighted'),
-                                                f1_score(gold_dev, stats_dev, average='weighted')))
-    print("stats, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, stats_test),
+                                                f1_score(gold_dev, stats_dev, average='weighted'),
+                                                mean_squared_error(gold_dev, stats_dev),
+                                                spearmanr(gold_dev, stats_dev)[0]))
+    print("stats, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_test, stats_test),
                                                 precision_score(gold_test, stats_test, average='weighted'),
                                                 recall_score(gold_test, stats_test, average='weighted'),
-                                                f1_score(gold_test, stats_test, average='weighted')))
+                                                f1_score(gold_test, stats_test, average='weighted'),
+                                                mean_squared_error(gold_test, stats_test),
+                                                spearmanr(gold_test, stats_test)[0]))
 
     print()
     print("#" * 20 + " BINARY LABEL RESULTS " + "#" * 20)
-    print("acc, prec, rec, f1")
-    print("MOST COMMON, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, most_common_bin_dev),
+    print("acc, prec, rec, f1, spearman")
+    print("MOST COMMON, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, most_common_bin_dev),
                                                 precision_score(gold_bin_dev, most_common_bin_dev, average='weighted'),
                                                 recall_score(gold_bin_dev, most_common_bin_dev, average='weighted'),
-                                                f1_score(gold_bin_dev, most_common_bin_dev, average='weighted')))
-    print("MOST COMMON, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, most_common_bin_test),
+                                                f1_score(gold_bin_dev, most_common_bin_dev, average='weighted'),
+                                                mean_squared_error(gold_bin_dev, most_common_bin_dev),
+                                                spearmanr(gold_bin_dev, most_common_bin_dev)[0]))
+    print("MOST COMMON, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, most_common_bin_test),
                                                 precision_score(gold_bin_test, most_common_bin_test, average='weighted'),
                                                 recall_score(gold_bin_test, most_common_bin_test, average='weighted'),
-                                                f1_score(gold_bin_test, most_common_bin_test, average='weighted')))
-    print("whole, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, whole_bin_dev),
+                                                f1_score(gold_bin_test, most_common_bin_test, average='weighted'),
+                                                mean_squared_error(gold_bin_test, most_common_bin_test),
+                                                spearmanr(gold_bin_test, most_common_bin_test)[0]))
+    print("whole, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, whole_bin_dev),
                                                 precision_score(gold_bin_dev, whole_bin_dev, average='weighted'),
                                                 recall_score(gold_bin_dev, whole_bin_dev, average='weighted'),
-                                                f1_score(gold_bin_dev, whole_bin_dev, average='weighted')))
-    print("whole, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, whole_bin_test),
+                                                f1_score(gold_bin_dev, whole_bin_dev, average='weighted'),
+                                                mean_squared_error(gold_bin_dev, whole_bin_dev),
+                                                spearmanr(gold_bin_dev, whole_bin_dev)[0]))
+    print("whole, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, whole_bin_test),
                                                 precision_score(gold_bin_test, whole_bin_test, average='weighted'),
                                                 recall_score(gold_bin_test, whole_bin_test, average='weighted'),
-                                                f1_score(gold_bin_test, whole_bin_test, average='weighted')))
-    print("part, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, part_bin_dev),
+                                                f1_score(gold_bin_test, whole_bin_test, average='weighted'),
+                                                mean_squared_error(gold_bin_test, whole_bin_test),
+                                                spearmanr(gold_bin_test, whole_bin_test)[0]))
+    print("part, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, part_bin_dev),
                                                 precision_score(gold_bin_dev, part_bin_dev, average='weighted'),
                                                 recall_score(gold_bin_dev, part_bin_dev, average='weighted'),
-                                                f1_score(gold_bin_dev, part_bin_dev, average='weighted')))
-    print("part, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, part_bin_test),
+                                                f1_score(gold_bin_dev, part_bin_dev, average='weighted'),
+                                                mean_squared_error(gold_bin_dev, part_bin_dev),
+                                                spearmanr(gold_bin_dev, part_bin_dev)[0]))
+    print("part, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, part_bin_test),
                                                 precision_score(gold_bin_test, part_bin_test, average='weighted'),
                                                 recall_score(gold_bin_test, part_bin_test, average='weighted'),
-                                                f1_score(gold_bin_test, part_bin_test, average='weighted')))
-    print("stats, dev: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, stats_bin_dev),
+                                                f1_score(gold_bin_test, part_bin_test, average='weighted'),
+                                                mean_squared_error(gold_bin_test, part_bin_test),
+                                                spearmanr(gold_bin_test, part_bin_test)[0]))
+    print("stats, dev: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_dev, stats_bin_dev),
                                                 precision_score(gold_bin_dev, stats_bin_dev, average='weighted'),
                                                 recall_score(gold_bin_dev, stats_bin_dev, average='weighted'),
-                                                f1_score(gold_bin_dev, stats_bin_dev, average='weighted')))
-    print("stats, test: %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, stats_bin_test),
+                                                f1_score(gold_bin_dev, stats_bin_dev, average='weighted'),
+                                                mean_squared_error(gold_bin_dev, stats_bin_dev),
+                                                spearmanr(gold_bin_dev, stats_bin_dev)[0]))
+    print("stats, test: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f" % (accuracy_score(gold_bin_test, stats_bin_test),
                                                 precision_score(gold_bin_test, stats_bin_test, average='weighted'),
                                                 recall_score(gold_bin_test, stats_bin_test, average='weighted'),
-                                                f1_score(gold_bin_test, stats_bin_test, average='weighted')))
-    import pdb; pdb.set_trace()
+                                                f1_score(gold_bin_test, stats_bin_test, average='weighted'),
+                                                mean_squared_error(gold_bin_test, stats_bin_test),
+                                                spearmanr(gold_bin_test, stats_bin_test)[0]))

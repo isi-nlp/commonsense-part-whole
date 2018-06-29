@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     with open('hit_batches/batch_%s.csv' % args.batch_id) as f:
         with open('hit_results/batch_%s.csv' % args.batch_id, 'w') as of:
-            with open('hit_comments.csv', 'a') as cf:
+            with open('comments.csv', 'a') as cf:
                 w = csv.writer(of)
                 cw = csv.writer(cf)
                 r = csv.reader(f)
