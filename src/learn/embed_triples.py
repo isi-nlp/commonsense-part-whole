@@ -187,12 +187,15 @@ def early_stop(metrics, criterion, patience):
     else:
         return False
 
-def save_everything(exp_dir, model, metrics_dv, metrics_tr, criterion):
+def save_everything(args, exp_dir, model, metrics_dv, metrics_tr):
     metrics = {"%s" % (name):val.tolist() for (name,val) in metrics_dv.items()}
     metrics.update({"%s_tr" % (name):val.tolist() for (name,val) in metrics_tr.items()})
     with open('%s/metrics.json' % exp_dir, 'w') as of:
         json.dump(metrics, of, indent=1)
+    with open('%s/params.json' % exp_dir, 'w') as of:
+        json.dump({name: val for name, val in args.__dict__.items() if name != 'vis'}, of, indent=1)
     #save model
+    criterion = args.criterion
     if not np.all(np.isnan(metrics_dv[criterion])):
         if np.nanargmax(metrics_dv[criterion]) == len(metrics_dv[criterion]) - 1:
             #save state dict
@@ -210,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch-size', dest='batch_size', type=int, default=16, help='batch size for training')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--criterion', choices=['acc', 'prec', 'rec', 'f1', 'mse', 'spearman'], default='mse', help='metric for early stopping')
-    parser.add_argument('--patience', type=int, default=3, help='number of epochs without dev improvement in criterion metric befor early stoping')
+    parser.add_argument('--patience', type=int, default=5, help='number of epochs without dev improvement in criterion metric befor early stoping')
     parser.add_argument('--update-embed', action='store_const', const=True, help='flag to update ELMo embeddings (TODO)')
     parser.add_argument('--binary', action='store_const', const=True, help='flag to predict binary labels instead of ordinal labels')
     args = parser.parse_args()
@@ -218,7 +221,6 @@ if __name__ == "__main__":
     args.command = command
     args.exec_time = time.strftime('%b_%d_%H:%M:%S', time.localtime())
     args.vis = Plotter(args)
-
 
     build_vocab = args.embed_file is None
     train_set = TripleDataset(args.file, args.binary, vocab=build_vocab)
@@ -232,6 +234,7 @@ if __name__ == "__main__":
     if not args.embed_file:
         word2ix = train_set.word2ix
 
+    torch.manual_seed(4746)
     model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, binary=args.binary, embed_file=args.embed_file, word2ix=word2ix)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
@@ -276,11 +279,15 @@ if __name__ == "__main__":
             exp_dir = os.path.join(EXP_DIR, '_'.join(['embed', args.exec_time]))
             print("output directory: %s" % exp_dir)
             os.mkdir(exp_dir)
-        save_everything(exp_dir, model, metrics_dv, metrics_tr, args.criterion)
+        save_everything(args, exp_dir, model, metrics_dv, metrics_tr)
 
         #PLOT STUFF
         if epoch == 0:
             args.vis.populate(metrics_dv, metrics_tr)
         else:
             args.vis.update(epoch, metrics_dv, metrics_tr)
+
+        if early_stop(metrics_dv, args.criterion, args.patience):
+            print("early stopping point hit")
+            sys.exit(0)
 
