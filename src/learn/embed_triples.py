@@ -46,66 +46,91 @@ class TripleDataset(Dataset):
         return triple, self.triples.iloc[idx][lname]
 
 class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, binary=False, embed_file=None, word2ix=None):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, binary=False, embed_file=None, embed_type=None, word2ix=None):
         super(TripleMLP, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.nonlinearity = nonlinearity
         self.dropout = dropout
         self.binary = binary
+        self.embed_type = embed_type
 
         #set up embedding layer, either with elmo or from scratch
-        self.elmo = True
         if embed_file:
-            self.elmo_embeds = h5py.File(embed_file, 'r')
-            self.embed_size = 1024
+            if embed_type == 'elmo':
+                self.elmo_embeds = h5py.File(embed_file, 'r')
+                self.embed_size = 1024
+            elif embed_type == 'glove':
+                with open(embed_file, 'r') as f:
+                    self.glove_embeds = json.load(f)
+                self.embed_size = 300
         else:
             #add one for unk
             self.embed = nn.Embedding(len(word2ix)+1, self.hidden_size)
             self.embed_size = self.hidden_size
-            self.elmo = False
             self.word2ix = word2ix
 
         #first hidden layer
-        seq = [nn.Linear(self.embed_size*3, self.hidden_size)]
-        if self.nonlinearity == 'tanh':
-            seq.append(nn.Tanh())
-        else:
-            seq.append(nn.ReLU())
-        seq.append(nn.Dropout(p=self.dropout))
-
-        #more hidden layers
-        for _ in range(self.num_layers-1):
-            seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+        if self.num_layers > 0:
+            seq = [nn.Linear(self.embed_size*3, self.hidden_size)]
             if self.nonlinearity == 'tanh':
                 seq.append(nn.Tanh())
             else:
                 seq.append(nn.ReLU())
             seq.append(nn.Dropout(p=self.dropout))
 
+            #more hidden layers
+            for _ in range(self.num_layers-1):
+                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+                if self.nonlinearity == 'tanh':
+                    seq.append(nn.Tanh())
+                else:
+                    seq.append(nn.ReLU())
+                seq.append(nn.Dropout(p=self.dropout))
+        else:
+            seq = []
+
         #output
         out_dim = 2 if self.binary else 5
-        seq.append(nn.Linear(self.hidden_size, out_dim))
+        final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * 3
+        seq.append(nn.Linear(final_input, out_dim))
         seq.append(nn.LogSoftmax())
         self.MLP = nn.Sequential(*seq)
 
     def forward(self, triples, labels):
+        #embeddings...
         inp = []
         for triple in triples:
-            if self.elmo:
-                embeds = torch.Tensor(self.elmo_embeds[' '.join(triple)])
+            if self.embed_type == 'elmo':
+                #embeds = torch.Tensor(self.elmo_embeds[' '.join(triple)])
+                embeds = []
+                for comp in triple:
+                    for c in comp.split():
+                        embeds.append(torch.Tensor(self.elmo_embeds[c].value))
+            elif self.embed_type == 'glove':
+                embeds = []
+                for comp in triple:
+                    for c in comp.split():
+                        embeds.append(torch.Tensor(self.glove_embeds[c]))
             else:
                 idxs = []
                 for comp in triple:
                     for c in comp.split():
                         idxs.append(self.word2ix[c] if c in self.word2ix else len(self.word2ix))
                 embeds = self.embed(torch.LongTensor(idxs))
-            #combine multi word components
+
+            #combine multi word wholes or parts
             if ' ' in triple[0] or ' ' in triple[1]:
                 embeds = self.combine_embeds(triple, embeds)
                 inp.append(torch.cat(embeds))
             else:
-                inp.append(embeds.view(-1))
+                if type(embeds) is list:
+                    embeds = torch.cat(embeds)
+                else:
+                    embeds = embeds.view(-1)
+                inp.append(embeds)
+
+        #the rest
         inp = F.dropout(torch.stack(inp), p=self.dropout)
         pred = self.MLP(inp)
         loss = F.nll_loss(pred, torch.LongTensor(labels))
@@ -209,10 +234,11 @@ def save_everything(args, exp_dir, model, metrics_dv, metrics_tr):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to train file')
-    parser.add_argument('--embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
+    parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
+    parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'word2vec'], help='type of pretrained embedding to use')
     parser.add_argument('--epochs', type=int, default=10, help='number of epochs')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size')
-    parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers')
+    parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (0 = do LogReg)')
     parser.add_argument('--nonlinearity', choices=['relu', 'tanh'], default='relu', help='nonlinearity for MLP')
     parser.add_argument('--batch-size', dest='batch_size', type=int, default=16, help='batch size for training')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
@@ -240,12 +266,13 @@ if __name__ == "__main__":
         word2ix = train_set.word2ix
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, word2ix=word2ix)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     metrics_tr = defaultdict(lambda: np.array([]))
     metrics_dv = defaultdict(lambda: np.array([]))
     for epoch in range(args.epochs):
+
         #TRAIN LOOP
         losses, losses_dv = [], []
         model.train()
