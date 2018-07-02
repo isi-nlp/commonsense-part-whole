@@ -12,15 +12,15 @@ def crawl(dr, n_bks):
         return n_bks
     elif path_digits[0] == '2':
         if len(path_digits) > 1:
-            if path_digits[1] < '4':
+            if path_digits[1] < '6':
                 return n_bks
-            elif path_digits[1] == '4':
+            elif path_digits[1] == '6':
                 if len(path_digits) > 2:
-                    if path_digits[2] < '1':
+                    if path_digits[2] < '2':
                         return n_bks
-                    elif path_digits[2] == '8':
+                    elif path_digits[2] == '9':
                         if len(path_digits) > 3:
-                            if path_digits[3] <= '4':
+                            if path_digits[3] <= '5':
                                 return n_bks
 
     subdirs = ftp.nlst(dr)
@@ -42,7 +42,8 @@ def crawl(dr, n_bks):
             n_bks += 1
             if n_bks % 1 == 0:
                 print("%d books retrieved..." % (n_bks))
-        elif 'old' not in sd and not sd.endswith('.zip') and 'images' not in sd:
+        elif 'old' not in sd and not sd.endswith('.zip') and 'images' not in sd and 'mp3' not in sd \
+         and 'm4b' not in sd and 'ogg' not in sd and 'spx' not in sd:
             subsubdirs = ftp.nlst(sd)
             if not (len(subsubdirs) == 1 and subsubdirs[0] == sd):
                 #recurse
