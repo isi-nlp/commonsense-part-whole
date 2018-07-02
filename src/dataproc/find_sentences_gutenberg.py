@@ -24,7 +24,6 @@ for f in tqdm(os.listdir(BASE_DIR)):
         book = re.sub('\s+', ' ', book)
         sents = sent_tokenize(book)
         for sent in sents:
-            #TODO: look for word
             words = word_tokenize(sent)
             for w1, w2 in zip(words[:-1], words[1:]):
                 w1l, w2l = w1.lower(), w2.lower()
