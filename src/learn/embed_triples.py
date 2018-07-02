@@ -249,7 +249,7 @@ def update_metrics(metrics, golds, preds, losses, fold):
     metrics['spearman'] = np.append(metrics['spearman'], spearmanr(golds, preds)[0])
     if fold == 'DEV':
         metrics['loss_dev'] = np.append(metrics['loss_dev'], np.mean(losses))
-    print("%s METRICS: %.3f %.3f %.3f %.3f, %.3f, %.3f" % \
+    print("%s METRICS: %.3f & %.3f & %.3f & %.3f & %.3f & %.3f" % \
             (fold, metrics['acc'][-1], metrics['prec'][-1], metrics['rec'][-1], metrics['f1'][-1], metrics['mse'][-1], metrics['spearman'][-1]))
     return metrics
 
