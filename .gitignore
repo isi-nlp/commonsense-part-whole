@@ -105,6 +105,7 @@ venv.bak/
 
 #other dirs
 data/adjectives
+data/annotated
 data/brysbaert
 data/conceptnet
 data/excel
@@ -122,6 +123,7 @@ data/wikidata
 data/wikipedia
 data/word2vec
 data/yago
+experiments/
 figs/
 
 #HIT data

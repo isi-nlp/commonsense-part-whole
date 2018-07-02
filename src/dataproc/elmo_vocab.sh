@@ -1,6 +1,7 @@
 #!/bin/bash
-###    Get elmo embeddings for each triple as if it were a sentence, to be passed into MLP
-###        - Maybe we should just get context-less embeddings for individual words, but doing this for now
+###    Get elmo embeddings for each word individually
+###    Input 1: train file
+###    Input 2: output file name
 
 if [ $# -lt 2 ]; then
     echo 1>&2 "$0: not enough arguments"
