@@ -30,8 +30,16 @@ def process_dir(dirname):
             #parse
             try:
                 docx = xmltodict.parse(doc.replace('&', '&amp;') + "</DOC>")
-            except:
-                import pdb; pdb.set_trace()
+            except Exception as e:
+                print("EXCEPTION!")
+                print(dirname)
+                print(f)
+                print(idx)
+                print(doc_ix)
+                print(e)
+                print()
+                continue
+                #import pdb; pdb.set_trace()
                 
             #get text
             try:
@@ -55,7 +63,10 @@ def process_dir(dirname):
             elif text is None:
                 continue
             else:
-                import pdb; pdb.set_trace()
+                print(type(text))
+                print("idk how to deal with this. skipping")
+                continue
+                #import pdb; pdb.set_trace()
 
             if paras is None:
                 continue
@@ -67,23 +78,35 @@ def process_dir(dirname):
                 for sent in sents:
                     sent = sent.replace('\n', ' ')
                     words = word_tokenize(sent)
-                    for w1, w2 in zip(words[:-1], words[1:]):
+                    for word_ix,(w1, w2) in enumerate(zip(words[:-1], words[1:])):
                         w1l, w2l = w1.lower(), w2.lower()
                         #consider both possiblities - red car and car red. 
+                        display_update = False
                         if (w2l, w1l) in whole_jjs:
                             whole_jjs[(w2l,w1l)].add(sent)
                             sentences_found += 1
-                            if sentences_found % 100 == 0:
-                                print("%s: %d sentences found" % (dirname, sentences_found))
-                                wjjs_with_context = len([tup for tup,snt in whole_jjs.items() if len(snt) > 0])
-                                print("%s: %d whole-jjs with sentences" % (dirname, wjjs_with_context))
+                            display_update = sentences_found % 100 == 0
                         elif  (w1l, w2l) in whole_jjs:
                             whole_jjs[(w1l,w2l)].add(sent)
                             sentences_found += 1
-                            if sentences_found % 100 == 0:
-                                print("%s: %d sentences found" % (dirname, sentences_found))
-                                wjjs_with_context = len([tup for tup,snt in whole_jjs.items() if len(snt) > 0])
-                                print("%s: %d whole-jjs with sentences" % (dirname, wjjs_with_context))
+                            display_update = sentences_found % 100 == 0
+                        else:
+                            #also look for multi-word wholes
+                            multi_part = ' '.join((w1l,w2l))
+                            if word_ix + 2 <= len(words) - 1 and (multi_part, words[word_ix + 2].lower()) in whole_jjs:
+                                whole_jjs[(multi_part, words[word_ix + 2].lower())].add(sent)
+                                sentences_found += 1
+                                display_update = sentences_found % 100 == 0
+                            elif word_ix - 1 >= 0 and (multi_part, words[word_ix - 1].lower()) in whole_jjs:
+                                whole_jjs[(multi_part, words[word_ix - 1].lower())].add(sent)
+                                sentences_found += 1
+                                display_update = sentences_found % 100 == 0
+
+                        if display_update:
+                            print("%s: %d sentences found" % (dirname, sentences_found))
+                            wjjs_with_context = len([tup for tup,snt in whole_jjs.items() if len(snt) > 0])
+                            print("%s: %d whole-jjs with sentences" % (dirname, wjjs_with_context))
+
             num_docs += 1
             #just write periodically idc
             if num_docs % 100 == 0:
