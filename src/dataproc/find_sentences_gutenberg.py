@@ -5,6 +5,7 @@ import csv, json, os, re, sys, time
 from multiprocessing import Pool
 
 from nltk.tokenize import sent_tokenize, word_tokenize
+import spacy
 from tqdm import tqdm
 
 nlp = spacy.load('en')
