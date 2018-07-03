@@ -24,7 +24,7 @@ def process_dir(dirname):
     for idx,f in enumerate(os.listdir('%s/%s' % (BASE_DIR, dirname))):
         raw = open('%s/%s/%s' % (BASE_DIR, dirname, f)).read()
         docs = raw.split('</DOC>')
-        for doc in docs:
+        for doc_ix,doc in enumerate(docs):
             if not doc.strip().startswith('<DOC'):continue
 
             #parse
@@ -34,7 +34,17 @@ def process_dir(dirname):
                 import pdb; pdb.set_trace()
                 
             #get text
-            docxdoc = docx['DOC']
+            try:
+                docxdoc = docx['DOC']
+            except Exception as e:
+                print("EXCEPTION!")
+                print(dirname)
+                print(f)
+                print(idx)
+                print(doc_ix)
+                print(e)
+                print()
+                continue
             if 'TEXT' not in docxdoc or docxdoc['TEXT'] is None:
                 continue
             text = docx['DOC']['TEXT']
@@ -76,12 +86,16 @@ def process_dir(dirname):
                                 print("%s: %d whole-jjs with sentences" % (dirname, wjjs_with_context))
             num_docs += 1
             #just write periodically idc
-            if num_docs % 10 == 0:
+            if num_docs % 100 == 0:
                 with open('../../data/candidates/wj-gigaword-sentences-%s.json' % dirname, 'w') as of:
                     #put whole-jj into a single string and do set->list so the json works
                     wjj = {', '.join(tup):list(snts) for tup,snts in whole_jjs.items()}
                     json.dump(wjj, of, indent=1)
  
+    with open('../../data/candidates/wj-gigaword-sentences-%s.json' % dirname, 'w') as of:
+        #put whole-jj into a single string and do set->list so the json works
+        wjj = {', '.join(tup):list(snts) for tup,snts in whole_jjs.items()}
+        json.dump(wjj, of, indent=1)
     return whole_jjs
 
 if __name__ == "__main__":
