@@ -17,9 +17,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
-import visdom
 
-EXP_DIR = '/home/jamesm/commonsense-part-whole/experiments'
+EXP_DIR = '../../experiments'
 
 class TripleDataset(Dataset):
     def __init__(self, fname, binary=False, vocab=False):
@@ -46,7 +45,7 @@ class TripleDataset(Dataset):
         return triple, self.triples.iloc[idx][lname]
 
 class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, binary=False, embed_file=None, embed_type=None, word2ix=None, loss_fn='cross_entropy'):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, binary=False, embed_file=None, embed_type=None, word2ix=None, loss_fn='cross_entropy', gpu=False):
         super(TripleMLP, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -55,6 +54,7 @@ class TripleMLP(nn.Module):
         self.binary = binary
         self.embed_type = embed_type
         self.loss_fn = loss_fn
+        self.device = torch.device('cuda') if gpu else torch.device('cpu')
 
         #set up embedding layer, either with elmo or from scratch
         if embed_file:
@@ -110,18 +110,18 @@ class TripleMLP(nn.Module):
                 embeds = []
                 for comp in triple:
                     for c in comp.split():
-                        embeds.append(torch.Tensor(self.elmo_embeds[c].value).squeeze())
+                        embeds.append(torch.Tensor(self.elmo_embeds[c].value).squeeze().to(self.device))
             elif self.embed_type == 'glove':
                 embeds = []
                 for comp in triple:
                     for c in comp.split():
-                        embeds.append(torch.Tensor(self.glove_embeds[c]))
+                        embeds.append(torch.Tensor(self.glove_embeds[c]).to(self.device))
             else:
                 idxs = []
                 for comp in triple:
                     for c in comp.split():
                         idxs.append(self.word2ix[c] if c in self.word2ix else len(self.word2ix))
-                embeds = self.embed(torch.LongTensor(idxs))
+                embeds = self.embed(torch.LongTensor(idxs).to(self.device))
 
             #combine multi word wholes or parts
             if ' ' in triple[0] or ' ' in triple[1]:
@@ -138,11 +138,11 @@ class TripleMLP(nn.Module):
         inp = F.dropout(torch.stack(inp), p=self.dropout)
         pred = self.MLP(inp)
         if self.loss_fn == 'cross_entropy':
-            loss = F.cross_entropy(pred, torch.LongTensor(labels))
+            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
         elif self.loss_fn == 'mse':
-            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels))
+            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
         elif self.loss_fn == 'smooth_l1':
-            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels))
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
         return pred, loss
 
     def combine_embeds(self, triple, embeds):
@@ -165,6 +165,7 @@ class TripleMLP(nn.Module):
 #define a plotter object to make it simple to carry many window objects around
 class Plotter:
     def __init__(self, args):
+        import visdom
         self.vis = visdom.Visdom(env="%s" % args.exec_time)
         self.batch_loss_plt = self.vis.line(np.array([[0, 0]]), np.array([[0, 0]]),
                                             opts={'title': "Batch loss",
@@ -239,6 +240,8 @@ def save_everything(args, exp_dir, model, metrics_dv, metrics_tr):
             #save state dict
             sd = model.to(torch.device('cpu')).state_dict()
             torch.save(sd, '%s/model_best_%s.pth' % (exp_dir, criterion))
+            if args.gpu:
+                model.to(torch.device('cuda'))
 
 def update_metrics(metrics, golds, preds, losses, fold):
     metrics['acc'] = np.append(metrics['acc'], accuracy_score(golds, preds))
@@ -271,6 +274,7 @@ if __name__ == "__main__":
     parser.add_argument('--train-check-interval', dest='train_check_interval', type=int, default=5, help='number of epochs between checking train metrics (default: 5)')
     parser.add_argument('--update-embed', dest='update_embed', action='store_const', const=True, help='flag to update ELMo embeddings (TODO)')
     parser.add_argument('--binary', action='store_const', const=True, help='flag to predict binary labels instead of ordinal labels')
+    parser.add_argument('--gpu', action='store_const', const=True, help='flag to use gpu')
     parser.add_argument('--no-plot', dest='no_plot', action='store_const', const=True, help='flag to predict NOT plot metrics')
     args = parser.parse_args()
     command = ' '.join(['python'] + sys.argv)
@@ -278,6 +282,7 @@ if __name__ == "__main__":
     args.exec_time = time.strftime('%b_%d_%H:%M:%S', time.localtime())
     if not args.no_plot:
         args.vis = Plotter(args)
+    device = torch.device('cuda' if args.gpu else 'cpu')
 
     build_vocab = args.embed_file is None
     train_set = TripleDataset(args.file, args.binary, vocab=build_vocab)
@@ -292,7 +297,7 @@ if __name__ == "__main__":
         word2ix = train_set.word2ix
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn, gpu=args.gpu).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     metrics_tr = defaultdict(lambda: np.array([]))
