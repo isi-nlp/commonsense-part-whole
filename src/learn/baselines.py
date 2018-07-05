@@ -7,9 +7,14 @@
 """
 import argparse, csv, operator
 from collections import Counter, defaultdict, OrderedDict
+
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from scipy.stats import spearmanr
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, mean_squared_error
 
 def get_preds_by_ngram_stats(fname, binary=False):
     print("reading noun-adjective counts from google dependency n-grams...")
@@ -63,6 +68,7 @@ def _preds_for_file(noun2jjs, fname, binary):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help="file of triples to predict. Give a train file with corresponding dev/test files")
+    parser.add_argument('--no-stats', dest='no_stats', action='store_const', const=True, help="flag to not do the stats part")
     args = parser.parse_args()
 
     #dict argmax function
@@ -71,13 +77,14 @@ if __name__ == "__main__":
     #get part/whole counts from train
     whole_counts, whole_bin_counts = defaultdict(lambda: Counter()), defaultdict(lambda: Counter())
     part_counts, part_bin_counts = defaultdict(lambda: Counter()), defaultdict(lambda: Counter())
+    jj_counts, jj_bin_counts = defaultdict(lambda: Counter()), defaultdict(lambda: Counter())
     label_counts, bin_label_counts = np.zeros(5), np.zeros(2)
     with open(args.file) as f:
         r = csv.reader(f)
         #header
         next(r)
         for row in r:
-            whole, part, _, label, bin_label = tuple(row)
+            whole, part, jj, label, bin_label = tuple(row)
 
             whole_counts[whole][int(label)] += 1
             whole_bin_counts[whole][int(bin_label)] += 1
@@ -85,24 +92,30 @@ if __name__ == "__main__":
             part_counts[part][int(label)] += 1
             part_bin_counts[part][int(bin_label)] += 1
 
+            jj_counts[jj][int(label)] += 1
+            jj_bin_counts[jj][int(bin_label)] += 1
+
             label_counts[int(label)] += 1
             bin_label_counts[int(bin_label)] += 1
 
     #use them to predict on dev/test
-    most_common_dev, whole_dev, part_dev = [], [], []
-    most_common_bin_dev, whole_bin_dev, part_bin_dev = [], [], []
+    most_common_dev, whole_dev, part_dev, jj_dev = [], [], [], []
+    most_common_bin_dev, whole_bin_dev, part_bin_dev, jj_bin_dev = [], [], [], []
     gold_dev, gold_bin_dev = [], []
     with open(args.file.replace('train', 'dev')) as f:
         r = csv.reader(f)
         #header
         next(r)
         for row in r:
-            whole, part = tuple(row[:2])
+            whole, part, jj = tuple(row[:3])
             whole_dev.append(argmax(whole_counts[whole]) if whole in whole_counts else np.argmax(label_counts))
             whole_bin_dev.append(argmax(whole_bin_counts[whole]) if whole in whole_bin_counts else np.argmax(bin_label_counts))
 
             part_dev.append(argmax(part_counts[part]) if part in part_counts else np.argmax(label_counts))
             part_bin_dev.append(argmax(part_bin_counts[part]) if part in part_bin_counts else np.argmax(bin_label_counts))
+
+            jj_dev.append(argmax(jj_counts[jj]) if jj in jj_counts else np.argmax(label_counts))
+            jj_bin_dev.append(argmax(jj_bin_counts[jj]) if jj in jj_bin_counts else np.argmax(bin_label_counts))
 
             most_common_dev.append(np.argmax(label_counts))
             most_common_bin_dev.append(np.argmax(bin_label_counts))
@@ -111,8 +124,8 @@ if __name__ == "__main__":
             gold_bin_dev.append(int(row[4]))
 
     #use them to predict on dev/test
-    most_common_test, whole_test, part_test = [], [], []
-    most_common_bin_test, whole_bin_test, part_bin_test = [], [], []
+    most_common_test, whole_test, part_test, jj_test = [], [], [], []
+    most_common_bin_test, whole_bin_test, part_bin_test, jj_bin_test = [], [], [], []
     gold_test, gold_bin_test = [], []
     with open(args.file.replace('train', 'test')) as f:
         r = csv.reader(f)
@@ -126,14 +139,18 @@ if __name__ == "__main__":
             part_test.append(argmax(part_counts[part]) if part in part_counts else np.argmax(label_counts))
             part_bin_test.append(argmax(part_bin_counts[part]) if part in part_bin_counts else np.argmax(bin_label_counts))
 
+            jj_test.append(argmax(jj_counts[jj]) if jj in jj_counts else np.argmax(label_counts))
+            jj_bin_test.append(argmax(jj_bin_counts[jj]) if jj in jj_bin_counts else np.argmax(bin_label_counts))
+
             most_common_test.append(np.argmax(label_counts))
             most_common_bin_test.append(np.argmax(bin_label_counts))
 
             gold_test.append(int(row[3]))
             gold_bin_test.append(int(row[4]))
 
-    stats_dev, stats_test = get_preds_by_ngram_stats(args.file)
-    stats_bin_dev, stats_bin_test = get_preds_by_ngram_stats(args.file, binary=True)
+    if not args.no_stats:
+        stats_dev, stats_test = get_preds_by_ngram_stats(args.file)
+        stats_bin_dev, stats_bin_test = get_preds_by_ngram_stats(args.file, binary=True)
 
     print("#" * 20 + " FULL LABEL RESULTS " + "#" * 20)
     print("acc, prec, rec, f1, MSE, spearman")
@@ -173,18 +190,64 @@ if __name__ == "__main__":
                                                 f1_score(gold_test, part_test, average='weighted'),
                                                 mean_squared_error(gold_test, part_test),
                                                 spearmanr(gold_test, part_test)[0]))
-    print("stats, dev: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_dev, stats_dev),
-                                                precision_score(gold_dev, stats_dev, average='weighted'),
-                                                recall_score(gold_dev, stats_dev, average='weighted'),
-                                                f1_score(gold_dev, stats_dev, average='weighted'),
-                                                mean_squared_error(gold_dev, stats_dev),
-                                                spearmanr(gold_dev, stats_dev)[0]))
-    print("stats, test: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_test, stats_test),
-                                                precision_score(gold_test, stats_test, average='weighted'),
-                                                recall_score(gold_test, stats_test, average='weighted'),
-                                                f1_score(gold_test, stats_test, average='weighted'),
-                                                mean_squared_error(gold_test, stats_test),
-                                                spearmanr(gold_test, stats_test)[0]))
+    print("jj, dev: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_dev, jj_dev),
+                                                precision_score(gold_dev, jj_dev, average='weighted'),
+                                                recall_score(gold_dev, jj_dev, average='weighted'),
+                                                f1_score(gold_dev, jj_dev, average='weighted'),
+                                                mean_squared_error(gold_dev, jj_dev),
+                                                spearmanr(gold_dev, jj_dev)[0]))
+    print("jj, test: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_test, jj_test),
+                                                precision_score(gold_test, jj_test, average='weighted'),
+                                                recall_score(gold_test, jj_test, average='weighted'),
+                                                f1_score(gold_test, jj_test, average='weighted'),
+                                                mean_squared_error(gold_test, jj_test),
+                                                spearmanr(gold_test, jj_test)[0]))
+    if not args.no_stats:
+        print("stats, dev: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_dev, stats_dev),
+                                                    precision_score(gold_dev, stats_dev, average='weighted'),
+                                                    recall_score(gold_dev, stats_dev, average='weighted'),
+                                                    f1_score(gold_dev, stats_dev, average='weighted'),
+                                                    mean_squared_error(gold_dev, stats_dev),
+                                                    spearmanr(gold_dev, stats_dev)[0]))
+        print("stats, test: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_test, stats_test),
+                                                    precision_score(gold_test, stats_test, average='weighted'),
+                                                    recall_score(gold_test, stats_test, average='weighted'),
+                                                    f1_score(gold_test, stats_test, average='weighted'),
+                                                    mean_squared_error(gold_test, stats_test),
+                                                    spearmanr(gold_test, stats_test)[0]))
+
+    print("whole dev confusion matrix")
+    whole_conmat = confusion_matrix(gold_dev, whole_dev)
+    print(whole_conmat)
+    labels = ['impossible', 'unlikely', 'unrelated', 'probably', 'guaranteed']
+    fig = plt.figure(1)
+    fig.set_size_inches(14,4)
+    df_cmw = pd.DataFrame(whole_conmat, index=labels, columns=labels)
+    ax = plt.subplot(131)
+    sns.heatmap(df_cmw, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
+    ax.set_title('Most common per whole')
+    ax.set_xlabel('Predicted class')
+    ax.set_ylabel('True class')
+
+    print("part dev confusion matrix")
+    part_conmat = confusion_matrix(gold_dev, part_dev)
+    print(part_conmat)
+    df_cmp = pd.DataFrame(part_conmat, index=labels, columns=labels)
+    ax = plt.subplot(132)
+    sns.heatmap(df_cmp, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
+    ax.set_title('Most common per part')
+    ax.set_xlabel('Predicted class')
+
+    print("jj dev confusion matrix")
+    jj_conmat = confusion_matrix(gold_dev, jj_dev)
+    print(jj_conmat)
+    df_cmj = pd.DataFrame(jj_conmat, index=labels, columns=labels)
+    ax = plt.subplot(133)
+    sns.heatmap(df_cmj, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
+    ax.set_title('Most common per adjective')
+    ax.set_xlabel('Predicted class')
+    plt.tight_layout()
+    plt.show()
 
     print()
     print("#" * 20 + " BINARY LABEL RESULTS " + "#" * 20)
@@ -225,15 +288,29 @@ if __name__ == "__main__":
                                                 f1_score(gold_bin_test, part_bin_test, average='weighted'),
                                                 mean_squared_error(gold_bin_test, part_bin_test),
                                                 spearmanr(gold_bin_test, part_bin_test)[0]))
-    print("stats, dev: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_bin_dev, stats_bin_dev),
-                                                precision_score(gold_bin_dev, stats_bin_dev, average='weighted'),
-                                                recall_score(gold_bin_dev, stats_bin_dev, average='weighted'),
-                                                f1_score(gold_bin_dev, stats_bin_dev, average='weighted'),
-                                                mean_squared_error(gold_bin_dev, stats_bin_dev),
-                                                spearmanr(gold_bin_dev, stats_bin_dev)[0]))
-    print("stats, test: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_bin_test, stats_bin_test),
-                                                precision_score(gold_bin_test, stats_bin_test, average='weighted'),
-                                                recall_score(gold_bin_test, stats_bin_test, average='weighted'),
-                                                f1_score(gold_bin_test, stats_bin_test, average='weighted'),
-                                                mean_squared_error(gold_bin_test, stats_bin_test),
-                                                spearmanr(gold_bin_test, stats_bin_test)[0]))
+    print("jj, dev: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_bin_dev, jj_bin_dev),
+                                                precision_score(gold_bin_dev, jj_bin_dev, average='weighted'),
+                                                recall_score(gold_bin_dev, jj_bin_dev, average='weighted'),
+                                                f1_score(gold_bin_dev, jj_bin_dev, average='weighted'),
+                                                mean_squared_error(gold_bin_dev, jj_bin_dev),
+                                                spearmanr(gold_bin_dev, jj_bin_dev)[0]))
+    print("jj, test: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_bin_test, jj_bin_test),
+                                                precision_score(gold_bin_test, jj_bin_test, average='weighted'),
+                                                recall_score(gold_bin_test, jj_bin_test, average='weighted'),
+                                                f1_score(gold_bin_test, jj_bin_test, average='weighted'),
+                                                mean_squared_error(gold_bin_test, jj_bin_test),
+                                                spearmanr(gold_bin_test, jj_bin_test)[0]))
+    if not args.no_stats:
+        print("stats, dev: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_bin_dev, stats_bin_dev),
+                                                    precision_score(gold_bin_dev, stats_bin_dev, average='weighted'),
+                                                    recall_score(gold_bin_dev, stats_bin_dev, average='weighted'),
+                                                    f1_score(gold_bin_dev, stats_bin_dev, average='weighted'),
+                                                    mean_squared_error(gold_bin_dev, stats_bin_dev),
+                                                    spearmanr(gold_bin_dev, stats_bin_dev)[0]))
+        print("stats, test: %.3f & %.3f & %.3f & %.3f & %01.2f & %.3f" % (accuracy_score(gold_bin_test, stats_bin_test),
+                                                    precision_score(gold_bin_test, stats_bin_test, average='weighted'),
+                                                    recall_score(gold_bin_test, stats_bin_test, average='weighted'),
+                                                    f1_score(gold_bin_test, stats_bin_test, average='weighted'),
+                                                    mean_squared_error(gold_bin_test, stats_bin_test),
+                                                    spearmanr(gold_bin_test, stats_bin_test)[0]))
+

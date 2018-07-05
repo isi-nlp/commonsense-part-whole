@@ -6,10 +6,13 @@ import argparse, csv, json, os, sys, time
 from collections import defaultdict
 
 import h5py
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from scipy.stats import spearmanr
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, mean_squared_error
 from sklearn.feature_extraction.text import CountVectorizer
 import torch
 import torch.nn as nn
@@ -236,7 +239,8 @@ def save_everything(args, exp_dir, model, metrics_dv, metrics_tr):
     #save model
     criterion = args.criterion
     if not np.all(np.isnan(metrics_dv[criterion])):
-        if np.nanargmax(metrics_dv[criterion]) == len(metrics_dv[criterion]) - 1:
+        if criterion in ['mse', 'loss_dev'] and np.nanargmin(metrics_dv[criterion]) == len(metrics_dv[criterion]) - 1\
+        or criterion not in ['mse', 'loss_dev'] and np.nanargmax(metrics_dv[criterion]) == len(metrics_dv[criterion]) - 1:
             #save state dict
             sd = model.to(torch.device('cpu')).state_dict()
             torch.save(sd, '%s/model_best_%s.pth' % (exp_dir, criterion))
@@ -252,7 +256,7 @@ def update_metrics(metrics, golds, preds, losses, fold):
     metrics['spearman'] = np.append(metrics['spearman'], spearmanr(golds, preds)[0])
     if fold == 'DEV':
         metrics['loss_dev'] = np.append(metrics['loss_dev'], np.mean(losses))
-    print("%s METRICS: %.3f & %.3f & %.3f & %.3f & %.3f & %.3f" % \
+    print("%s METRICS: %.3f & %.3f & %.3f & %.3f & %1.2f & %.3f" % \
             (fold, metrics['acc'][-1], metrics['prec'][-1], metrics['rec'][-1], metrics['f1'][-1], metrics['mse'][-1], metrics['spearman'][-1]))
     return metrics
 
@@ -273,6 +277,7 @@ if __name__ == "__main__":
     parser.add_argument('--patience', type=int, default=5, help='number of epochs without dev improvement in criterion metric befor early stopping (default: 5)')
     parser.add_argument('--train-check-interval', dest='train_check_interval', type=int, default=5, help='number of epochs between checking train metrics (default: 5)')
     parser.add_argument('--update-embed', dest='update_embed', action='store_const', const=True, help='flag to update ELMo embeddings (TODO)')
+    parser.add_argument('--test-model', dest='test_model', type=str, help='path to saved model file')
     parser.add_argument('--binary', action='store_const', const=True, help='flag to predict binary labels instead of ordinal labels')
     parser.add_argument('--gpu', action='store_const', const=True, help='flag to use gpu')
     parser.add_argument('--no-plot', dest='no_plot', action='store_const', const=True, help='flag to predict NOT plot metrics')
@@ -280,7 +285,7 @@ if __name__ == "__main__":
     command = ' '.join(['python'] + sys.argv)
     args.command = command
     args.exec_time = time.strftime('%b_%d_%H:%M:%S', time.localtime())
-    if not args.no_plot:
+    if not args.no_plot and not args.test_model:
         args.vis = Plotter(args)
     device = torch.device('cuda' if args.gpu else 'cpu')
 
@@ -297,40 +302,49 @@ if __name__ == "__main__":
         word2ix = train_set.word2ix
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn, gpu=args.gpu).to(device)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn, gpu=args.gpu)
+    if args.test_model:
+        sd = torch.load(args.test_model)
+        model.load_state_dict(sd)
+        dont_train = True
+    else:
+        dont_train = False
+    model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     metrics_tr = defaultdict(lambda: np.array([]))
     metrics_dv = defaultdict(lambda: np.array([]))
     for epoch in range(args.epochs):
 
-        #TRAIN LOOP
         losses, losses_dv = [], []
-        model.train()
-        train_golds, train_preds = [], []
-        for batch_ix, (triples, labels) in tqdm(enumerate(train_loader)):
-            optimizer.zero_grad()
-            preds, loss = model(triples, labels)
-            train_golds.extend(labels)
-            if args.loss_fn == 'cross_entropy':
-                train_preds.extend([pred.argmax().item() for pred in preds])
-            elif args.loss_fn in ['mse', 'smooth_l1']:
-                train_preds.extend([pred.round().long().item() for pred in preds])
+        #TRAIN LOOP
+        if not dont_train:
+            model.train()
+            train_golds, train_preds = [], []
+            for batch_ix, (triples, labels) in tqdm(enumerate(train_loader)):
+                optimizer.zero_grad()
+                preds, loss = model(triples, labels)
+                train_golds.extend(labels)
+                if args.loss_fn == 'cross_entropy':
+                    train_preds.extend([pred.argmax().item() for pred in preds])
+                elif args.loss_fn in ['mse', 'smooth_l1']:
+                    train_preds.extend([pred.round().long().item() for pred in preds])
 
-            loss.backward()
-            optimizer.step()
-            losses.append(loss.item())
-            if not args.no_plot:
-                args.vis.plot_batch_loss(losses, 10)
-        metrics_tr['loss'] = np.append(metrics_tr['loss'], np.mean(losses))
+                loss.backward()
+                optimizer.step()
+                losses.append(loss.item())
+                if not args.no_plot:
+                    args.vis.plot_batch_loss(losses, 10)
+            metrics_tr['loss'] = np.append(metrics_tr['loss'], np.mean(losses))
+            print("Loss: %.4f" % np.mean(losses))
 
         #DEV LOOP
-        print("Loss: %.4f" % np.mean(losses))
         with torch.no_grad():
             model.eval()
-            dev_golds, dev_preds = [], []
+            dev_trips, dev_golds, dev_preds = [], [], []
             for batch_ix, (triples, labels) in tqdm(enumerate(dev_loader)):
                 preds, loss = model(triples, labels)
+                dev_trips.extend(triples)
                 dev_golds.extend(labels)
                 if args.loss_fn == 'cross_entropy':
                     dev_preds.extend([pred.argmax().item() for pred in preds])
@@ -339,25 +353,56 @@ if __name__ == "__main__":
                 losses_dv.append(loss)
 
         #SAVE AND PRINT STUFF
-        if epoch % args.train_check_interval == 0:
+        if epoch % args.train_check_interval == 0 and not dont_train:
             metrics_tr = update_metrics(metrics_tr, train_golds, train_preds, losses, 'TRAIN')
         metrics_dv = update_metrics(metrics_dv, dev_golds, dev_preds, losses_dv, 'DEV')
 
-        if epoch == 0:
+        if epoch == 0 and not dont_train:
             #make experiment directory
             exp_dir = os.path.join(EXP_DIR, '_'.join(['embed', args.exec_time]))
             print("output directory: %s" % exp_dir)
             os.mkdir(exp_dir)
+        elif args.test_model:
+            exp_dir = os.path.dirname(args.test_model)
         save_everything(args, exp_dir, model, metrics_dv, metrics_tr)
 
         #PLOT STUFF
         if not args.no_plot:
-            if epoch == 0:
+            if epoch == 0 and not dont_train:
                 args.vis.populate(metrics_dv, metrics_tr)
+            elif dont_train:
+                #write preds
+                with open('%s/dev_preds.csv' % exp_dir, 'w') as of:
+                    w = csv.writer(of)
+                    lname = 'bin_label' if args.binary else 'label'
+                    w.writerow(['whole', 'part', 'jj', 'pred', lname])
+                    for trip, pred, gold in zip(dev_trips, dev_preds, dev_golds):
+                        w.writerow([*trip, pred, gold])
+
+                #visualize confusion matrix
+                conmat = confusion_matrix(dev_golds, dev_preds)
+                labels = ['impossible', 'unlikely', 'unrelated', 'probably', 'guaranteed']
+                plt.figure()
+                df_cm = pd.DataFrame(conmat, index=labels, columns=labels)
+                #sns.heatmap(df_cm, annot=True, fmt='g', norm=colors.LogNorm(vmin=0,vmax=conmat.max()), cbar=False, cmap='hot', annot_kws={'fontsize': 'xx-large'})
+                sns.heatmap(df_cm, annot=True, fmt='g', cbar=False, annot_kws={'fontsize': 'xx-large'})
+                embed_type = args.embed_type if args.embed_type is not None else 'scratch'
+                plt.title('Confusion matrix: {} embeddings'.format(embed_type))
+                plt.xlabel('Predicted class')
+                plt.ylabel('True class')
+                plt.tight_layout()
+                plt.show()
+                sys.exit(0)
             else:
                 args.vis.update(epoch, metrics_dv, metrics_tr)
 
         if early_stop(metrics_dv, args.criterion, args.patience):
             print("early stopping point hit")
-            sys.exit(0)
+            #reload best model
+            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn, gpu=args.gpu)
+            sd = torch.load('%s/model_best_%s.pth' % (exp_dir, args.criterion))
+            model.load_state_dict(sd)
+            model.to(device)
+            #flag to rerun on dev
+            dont_train = True
 

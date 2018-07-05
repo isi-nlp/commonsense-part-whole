@@ -1,5 +1,5 @@
 """
-    Read a file of AMT output (batch_n_just_results.csv), take the median response as ground truth
+    Read a file of AMT output (all_just_results.csv), take the median response as ground truth
     Split into train/dev/test with given split
 """
 import argparse, csv, random
