@@ -2,7 +2,7 @@
     Starting with elmo embeddings for a (whole, part, jj) triple, combine them with an MLP and predict
     TODO: reload best model after early stopping and predict on test
 """
-import argparse, csv, json, os, sys, time
+import argparse, csv, itertools, json, os, sys, time
 from collections import defaultdict
 
 import h5py
@@ -382,10 +382,22 @@ if __name__ == "__main__":
                 #visualize confusion matrix
                 conmat = confusion_matrix(dev_golds, dev_preds)
                 labels = ['impossible', 'unlikely', 'unrelated', 'probably', 'guaranteed']
+                ticks = np.arange(5)
                 plt.figure()
-                df_cm = pd.DataFrame(conmat, index=labels, columns=labels)
+
+                cm = conmat.copy()
+                for i in range(5):
+                    cm[i][i] = 0
+                plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+                plt.xticks(ticks, labels, rotation=45)
+                plt.yticks(ticks, labels)
+                thresh = cm.max() / 2
+                for i,j in itertools.product(range(5), range(5)):
+                    plt.text(j,i,conmat[i][j],horizontalalignment='center',color='white' if cm[i][j] > thresh else 'black')
+
+                #df_cm = pd.DataFrame(conmat, index=labels, columns=labels)
                 #sns.heatmap(df_cm, annot=True, fmt='g', norm=colors.LogNorm(vmin=0,vmax=conmat.max()), cbar=False, cmap='hot', annot_kws={'fontsize': 'xx-large'})
-                sns.heatmap(df_cm, annot=True, fmt='g', cbar=False, annot_kws={'fontsize': 'xx-large'})
+                #sns.heatmap(df_cm, annot=True, fmt='g', cbar=False, annot_kws={'fontsize': 'xx-large'})
                 embed_type = args.embed_type if args.embed_type is not None else 'scratch'
                 plt.title('Confusion matrix: {} embeddings'.format(embed_type))
                 plt.xlabel('Predicted class')

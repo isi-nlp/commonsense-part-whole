@@ -5,7 +5,7 @@
     - most common class for given whole (default to most common overall if unseen)
     - statistics from Google n-grams on the frequency of JJ amod PART
 """
-import argparse, csv, operator
+import argparse, csv, itertools, operator
 from collections import Counter, defaultdict, OrderedDict
 
 import matplotlib.colors as colors
@@ -222,9 +222,21 @@ if __name__ == "__main__":
     labels = ['impossible', 'unlikely', 'unrelated', 'probably', 'guaranteed']
     fig = plt.figure(1)
     fig.set_size_inches(14,4)
-    df_cmw = pd.DataFrame(whole_conmat, index=labels, columns=labels)
+    ticks = np.arange(5)
     ax = plt.subplot(131)
-    sns.heatmap(df_cmw, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
+
+    wc = whole_conmat.copy()
+    for i in range(5):
+        wc[i][i] = 0
+    plt.imshow(wc, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.xticks(ticks, labels, rotation=45)
+    plt.yticks(ticks, labels)
+    thresh = wc.max() / 2
+    for i,j in itertools.product(range(5), range(5)):
+        plt.text(j,i,whole_conmat[i][j],horizontalalignment='center',color='white' if wc[i][j] > thresh else 'black')
+
+    #df_cmw = pd.DataFrame(whole_conmat, index=labels, columns=labels)
+    #sns.heatmap(df_cmw, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
     ax.set_title('Most common per whole')
     ax.set_xlabel('Predicted class')
     ax.set_ylabel('True class')
@@ -232,18 +244,40 @@ if __name__ == "__main__":
     print("part dev confusion matrix")
     part_conmat = confusion_matrix(gold_dev, part_dev)
     print(part_conmat)
-    df_cmp = pd.DataFrame(part_conmat, index=labels, columns=labels)
     ax = plt.subplot(132)
-    sns.heatmap(df_cmp, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
+
+    pc = part_conmat.copy()
+    for i in range(5):
+        pc[i][i] = 0
+    plt.imshow(pc, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.xticks(ticks, labels, rotation=45)
+    plt.yticks(ticks, labels)
+    thresh = pc.max() / 2
+    for i,j in itertools.product(range(5), range(5)):
+        plt.text(j,i,part_conmat[i][j],horizontalalignment='center',color='white' if pc[i][j] > thresh else 'black')
+
+    #df_cmp = pd.DataFrame(part_conmat, index=labels, columns=labels)
+    #sns.heatmap(df_cmp, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
     ax.set_title('Most common per part')
     ax.set_xlabel('Predicted class')
 
     print("jj dev confusion matrix")
     jj_conmat = confusion_matrix(gold_dev, jj_dev)
     print(jj_conmat)
-    df_cmj = pd.DataFrame(jj_conmat, index=labels, columns=labels)
     ax = plt.subplot(133)
-    sns.heatmap(df_cmj, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
+
+    jc = jj_conmat.copy()
+    for i in range(5):
+        jc[i][i] = 0
+    plt.imshow(jc, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.xticks(ticks, labels, rotation=45)
+    plt.yticks(ticks, labels)
+    thresh = jc.max() / 2
+    for i,j in itertools.product(range(5), range(5)):
+        plt.text(j,i,jj_conmat[i][j],horizontalalignment='center',color='white' if jc[i][j] > thresh else 'black')
+
+    #df_cmj = pd.DataFrame(jj_conmat, index=labels, columns=labels)
+    #sns.heatmap(df_cmj, annot=True, fmt='g', annot_kws={'fontsize': 'xx-large'})
     ax.set_title('Most common per adjective')
     ax.set_xlabel('Predicted class')
     plt.tight_layout()
