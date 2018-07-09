@@ -21,7 +21,7 @@ if __name__ == '__main__':
             next(r)
             for row in r:
                 tup = tuple(row[:3])
-                pw2labels[tup] = (fold, row[3], row[4])
+                trip2labels[tup] = (fold, row[3], row[4])
 
     trf = open(args.outfile.replace('.csv', '_train.csv'), 'w')
     dvf = open(args.outfile.replace('.csv', '_dev.csv'), 'w')
@@ -40,13 +40,14 @@ if __name__ == '__main__':
         next(r)
         for row in r:
             whole, part, jj = tuple(row[:3])
-            split, label, bin_label = trip2labels[(whole, part, jj)]
-            if split == 'train':
-                trw.writerow([whole, part, jj, row[4], row[5], label, bin_label])
-            if split == 'dev':
-                dvw.writerow([whole, part, jj, row[4], row[5], label, bin_label])
-            if split == 'test':
-                tew.writerow([whole, part, jj, row[4], row[5], label, bin_label])
+            if (whole, part, jj) in trip2labels:
+                split, label, bin_label = trip2labels[(whole, part, jj)]
+                if split == 'train':
+                    trw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+                if split == 'dev':
+                    dvw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+                if split == 'test':
+                    tew.writerow([whole, part, jj, row[3], row[4], label, bin_label])
 
     trf.close()
     dvf.close()
