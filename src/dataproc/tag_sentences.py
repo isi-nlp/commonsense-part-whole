@@ -71,6 +71,8 @@ if __name__ == "__main__":
 
                     obj['sentence1_parse'] = context_pos
                     obj['sentence2_parse'] = hyp_pos
+                    obj['sentence1_binary_parse'] = ' '.join([tok.text for tok in context])
+                    obj['sentence2_binary_parse'] = ' '.join([tok.text for tok in hyp])
                     obj['sentence1_token_exact_match_with_s2'] = c_h
                     obj['sentence2_token_exact_match_with_s1'] = h_c
 
