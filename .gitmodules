@@ -1,3 +1,6 @@
 [submodule "lib/DIIN"]
 	path = lib/DIIN
-	url = https://jamesmullenbach@github.com/jamesmullenbach/DIIN
+	url = https://jamesmullenbach@github.com/jamesmullenbach/DIIN.git
+[submodule "lib/transformer-lm"]
+	path = lib/transformer-lm
+	url = https://jamesmullenbach@github.com/jamesmullenbach/transformer-lm.git
