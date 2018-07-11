@@ -381,18 +381,18 @@ if __name__ == "__main__":
 
                 #visualize confusion matrix
                 conmat = confusion_matrix(dev_golds, dev_preds)
-                labels = ['impossible', 'unlikely', 'unrelated', 'probably', 'guaranteed']
-                ticks = np.arange(5)
+                labels = ['impossible', 'unlikely', 'unrelated', 'probably', 'guaranteed'] if not args.binary else ['non-entailment', 'entailment']
+                ticks = np.arange(len(labels))
                 plt.figure()
 
                 cm = conmat.copy()
-                for i in range(5):
+                for i in range(len(labels)):
                     cm[i][i] = 0
                 plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
                 plt.xticks(ticks, labels, rotation=45)
                 plt.yticks(ticks, labels)
                 thresh = cm.max() / 2
-                for i,j in itertools.product(range(5), range(5)):
+                for i,j in itertools.product(range(len(labels)), range(len(labels))):
                     plt.text(j,i,conmat[i][j],horizontalalignment='center',color='white' if cm[i][j] > thresh else 'black')
 
                 #df_cm = pd.DataFrame(conmat, index=labels, columns=labels)
