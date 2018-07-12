@@ -14,7 +14,7 @@ jj2acc = {jj:accuracy_score(df[df['jj'] == jj]['label'], df[df['jj'] == jj]['pre
 jj2count = {jj: len(df[df['jj'] == jj]) for jj in df['jj'].unique()}
 
 ranked = sorted(jj2acc.items(), key=operator.itemgetter(1))
-glove_jjs = [(jj, acc, jj2count[jj]) for (jj, acc) in ranked if jj2count[jj] >= 5]
+glove_jjs = [(jj, acc, jj2count[jj]) for (jj, acc) in ranked if jj2count[jj] >= 10]
         
 with open('%s/jjs-perf.csv' % exp_dir, 'w') as of:
     w = csv.writer(of)
@@ -26,7 +26,7 @@ part2acc = {part:accuracy_score(df[df['part'] == part]['label'], df[df['part'] =
 part2count = {part: len(df[df['part'] == part]) for part in df['part'].unique()}
 
 part_ranked = sorted(part2acc.items(), key=operator.itemgetter(1))
-glove_parts = [(part, acc, part2count[part]) for (part, acc) in part_ranked if part2count[part] >= 5]
+glove_parts = [(part, acc, part2count[part]) for (part, acc) in part_ranked if part2count[part] >= 10]
 
 with open('%s/parts-perf.csv' % exp_dir, 'w') as of:
     w = csv.writer(of)
@@ -38,7 +38,7 @@ whole2acc = {whole:accuracy_score(df[df['whole'] == whole]['label'], df[df['whol
 whole2count = { whole: len(df[df[ 'whole'] == whole]) for whole in df[ 'whole'].unique()}
 
 whole_ranked = sorted(whole2acc.items(), key=operator.itemgetter(1))
-glove_wholes = [( whole, acc, whole2count[whole]) for ( whole, acc) in whole_ranked if whole2count[whole] >= 5]
+glove_wholes = [( whole, acc, whole2count[whole]) for ( whole, acc) in whole_ranked if whole2count[whole] >= 10]
 
 with open('%s/wholes-perf.csv' % exp_dir, 'w') as of:
     w = csv.writer(of)
