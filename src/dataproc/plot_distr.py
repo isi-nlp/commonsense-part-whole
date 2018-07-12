@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 
 counts = [0] * 5
-with open('../../data/annotated/distr.txt') as f:
+with open('../../data/annotated/distr_two_agree.txt') as f:
     for line in f:
         line = line.strip().split()
         counts[int(line[1])] = int(line[0])
