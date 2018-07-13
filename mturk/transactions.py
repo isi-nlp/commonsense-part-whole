@@ -22,7 +22,8 @@ mturk = boto3.client('mturk',
                      endpoint_url = MTURK_URL
                      )
 
-df = pd.read_csv('/home/jamesm/mturk_transactions_jon.csv')
+df = pd.read_csv('/home/jamesm/Downloads/Transactions_2018-07-04_to_2018-07-12.csv')
+hits = set(df['HIT ID'].unique())
 hitinfo = namedtuple('hitinfo', ['hittypeid', 'title', 'description', 'keywords', 'reward', 'creationtime', 'maxassignments', 'assignmentduration', 'autoapprovaldelay', 'expiration'])
 hit2info = {}
 for hit_id in tqdm(hits):
@@ -32,7 +33,7 @@ for hit_id in tqdm(hits):
         hit2info[hit_id] = hitinfo(HIT['HITTypeId'], HIT['Title'], HIT['Description'], HIT['Keywords'], HIT['Reward'], HIT['CreationTime'], HIT['MaxAssignments'], HIT['AssignmentDurationInSeconds'], HIT['AutoApprovalDelayInSeconds'], HIT['Expiration'])
     
    
-with open('transaction_history.csv', 'w') as of:
+with open('transaction_history2.csv', 'w') as of:
     w = csv.writer(of)
     w.writerow(['HITId', 'HITTypeId', 'Title', 'Description', 'Keywords', 'Reward', 'CreationTime', 'MaxAssignments', 'AssignmentDurationInSeconds', 'AutoApprovalDelayInSeconds', 'Expiration', 'AssignmentId', 'WorkerId', 'AssignmentStatus', 'AcceptTime', 'SubmitTime', 'AutoApprovalTime', 'ApprovalTime', 'WorkTimeInSeconds'])
     for i,row in tqdm(df.iterrows()):
