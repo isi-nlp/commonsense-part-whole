@@ -1,5 +1,5 @@
 """
-    Look thru all gigaword docs for sentences with [adj whole]
+    Look thru all gigaword docs for sentences with [adj whole] or [whole adj]
 """
 import csv, json, os, random, re, sys
 from collections import OrderedDict
