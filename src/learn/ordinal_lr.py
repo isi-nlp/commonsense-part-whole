@@ -7,6 +7,7 @@ import mord
 import numpy as np
 
 from scipy.stats import spearmanr
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, mean_squared_error
 
 def combine_embeds(triple, embeds):
@@ -54,6 +55,7 @@ parser.add_argument("embed_file", type=str, help="path to embeddings file")
 parser.add_argument('embed_type', choices=['elmo', 'glove', 'word2vec'], help='type of pretrained embedding to use')
 parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
 parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 0.001)')
+parser.add_argument('--alpha', type=float, default=1., help='regularization strength')
 parser.add_argument('--binary', action='store_const', const=True, help='flag to predict binary labels instead of ordinal labels')
 args = parser.parse_args()
 
@@ -70,8 +72,8 @@ X_train, Y_train = process_data(args.file, 'train')
 X_dev, Y_dev = process_data(args.file, 'dev')
 X_test, Y_test = process_data(args.file, 'test')
 
-for clfclass in [mord.LogisticAT, mord.LogisticIT, mord.LogisticSE, mord.LAD, mord.OrdinalRidge]:
-    clf = clfclass()
+for clfclass in [mord.LogisticAT, mord.LogisticIT, mord.LogisticSE, mord.LAD, mord.OrdinalRidge]:#, LogisticRegression]:
+    clf = clfclass(alpha=args.alpha)
     print(clf)
 
     print("Training...")
@@ -87,3 +89,11 @@ for clfclass in [mord.LogisticAT, mord.LogisticIT, mord.LogisticSE, mord.LAD, mo
     print(f"mse: {mean_squared_error(Y_dev, preds)}")
     print(f"corr: {spearmanr(Y_dev, preds)[0]}")
 
+    preds_tr = clf.predict(X_train)
+
+    print(f"acc: {accuracy_score(Y_train, preds_tr)}")
+    print(f"prec: {precision_score(Y_train, preds_tr, average='weighted')}")
+    print(f"rec: {recall_score(Y_train, preds_tr, average='weighted')}")
+    print(f"f1: {f1_score(Y_train, preds_tr, average='weighted')}")
+    print(f"mse: {mean_squared_error(Y_train, preds_tr)}")
+    print(f"corr: {spearmanr(Y_train, preds_tr)[0]}")
