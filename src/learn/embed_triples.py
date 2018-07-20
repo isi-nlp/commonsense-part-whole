@@ -70,7 +70,7 @@ class TripleMLP(nn.Module):
                 self.embed_size = 1024
             elif embed_type == 'glove':
                 with open(embed_file, 'r') as f:
-                    self.glove_embeds = json.load(f)
+                    self.word2vec = json.load(f)
                 self.embed_size = 300
 
         if embed_file is None:
@@ -134,7 +134,7 @@ class TripleMLP(nn.Module):
                 embeds = []
                 for comp in triple:
                     for c in comp.split():
-                        embeds.append(torch.Tensor(self.word2vec[c].value).squeeze().to(self.device))
+                        embeds.append(torch.Tensor(self.word2vec[c]).squeeze().to(self.device))
 
             #combine multi word wholes or parts
             if ' ' in triple[0] or ' ' in triple[1]:
@@ -417,6 +417,7 @@ if __name__ == "__main__":
                 plt.ylabel('True class')
                 plt.tight_layout()
                 plt.show()
+                print(f"model saved at {exp_dir}")
                 sys.exit(0)
             else:
                 args.vis.update(epoch, metrics_dv, metrics_tr)

@@ -80,6 +80,8 @@ if __name__ == "__main__":
         goodtrips = [trip for trip,count in trip_counter.items() if count > 0]
         data_szs.append(len(goodtrips))
 
+    print([(th, ds) for th, ds in zip(threshes, data_szs) if 0.4 <= th and th <= 0.5])
+
     plt.plot(threshes, data_szs)
     plt.xlim(1,0)
     plt.show()
