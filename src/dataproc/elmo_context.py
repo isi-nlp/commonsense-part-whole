@@ -6,9 +6,13 @@ import csv
 import json
 
 from allennlp.modules.elmo import Elmo, batch_to_ids
+import nltk
 import numpy as np
 import spacy
 from tqdm import tqdm
+
+def retokenize(toklist):
+    return [token for retoked in [nltk.word_tokenize(tok) for tok in toklist] for token in retoked]
 
 options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
 weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
@@ -23,7 +27,7 @@ batch_size = 32
 with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
     w = csv.writer(of)
     w.writerow(['whole', 'part', 'jj', 'vec'])
-    with open('../../data/annotated/snli_style_train_feats.jsonl') as f:
+    with open('../../data/annotated/snli_style_feats.jsonl') as f:
         prem_batch = []
         prem_batch_idxs = [] #tuples
         hyp_batch = []
@@ -31,7 +35,7 @@ with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
         wbatch = []
         pbatch = []
         jbatch = []
-        for line in tqdm(f):
+        for idx,line in tqdm(enumerate(f)):
             obj = json.loads(line.strip())
             part, whole, jj = obj['part'], obj['whole'], obj['jj']
             prem_tokenized = [tok.text.lower() for tok in nlp(obj['sentence1'])]
@@ -39,7 +43,17 @@ with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
                 whole_idx = prem_tokenized.index(whole)
             else:
                 whole1, whole2 = whole.split()
-                whole_idx = (prem_tokenized.index(whole1), prem_tokenized.index(whole2))
+                try:
+                    idx1 = prem_tokenized.index(whole1)
+                except:
+                    prem_tokenized = retokenize(prem_tokenized)
+                    idx1 = prem_tokenized.index(whole1)
+                try:
+                    idx2 = prem_tokenized.index(whole2)
+                except:
+                    prem_tokenized = retokenize(prem_tokenized)
+                    idx2 = prem_tokenized.index(whole2)
+                whole_idx = (idx1, idx2)
             jj_idx = prem_tokenized.index(jj)
             prem_batch.append(prem_tokenized)
             prem_batch_idxs.append((whole_idx, jj_idx))

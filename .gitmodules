@@ -4,3 +4,6 @@
 [submodule "lib/transformer-lm"]
 	path = lib/transformer-lm
 	url = https://jamesmullenbach@github.com/jamesmullenbach/transformer-lm.git
+[submodule "lib/transformer-lm-pytorch"]
+	path = lib/transformer-lm-pytorch
+	url = https://jamesmullenbach@github.com/jamesmullenbach/transformer-lm-pytorch.git
