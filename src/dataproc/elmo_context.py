@@ -19,6 +19,7 @@ weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_51
 
 print("loading elmo")
 elmo = Elmo(options_file, weight_file, 1, dropout=0)
+print("done")
 
 #just the tokenizer
 nlp = spacy.load('en', disable=['tagger', 'parser', 'ner', 'textcat'])
@@ -89,3 +90,6 @@ with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
                 prem_batch_idxs = [] #tuples
                 hyp_batch = []
                 hyp_batch_idxs = []
+                wbatch = []
+                pbatch = []
+                jbatch = []

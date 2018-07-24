@@ -61,6 +61,7 @@ class TripleMLP(nn.Module):
         self.loss_fn = loss_fn
         self.device = torch.device('cuda') if gpu else torch.device('cpu')
         self.update_embed = update_embed
+        self.trip_embeds = False
 
         #set up embedding layer, either with elmo or from scratch
         if embed_file:
@@ -72,13 +73,23 @@ class TripleMLP(nn.Module):
                 with open(embed_file, 'r') as f:
                     self.word2vec = json.load(f)
                 self.embed_size = 300
+            elif embed_type == 'elmo_context':
+                self.trip2vec = {}
+                with open(embed_file) as f:
+                    r = csv.reader(f)
+                    #header
+                    next(r)
+                    for row in r:
+                        self.trip2vec[tuple(row[:3])] = torch.tensor(np.array(row[3:], dtype=np.float32)).to(self.device)
+                self.trip_embeds = True
+                self.embed_size = 1024
 
         if embed_file is None:
             self.embed_size = self.hidden_size
             self.word2vec = None
 
         if self.update_embed:
-            self.load_pretrained()
+            self._load_pretrained()
 
         #first hidden layer
         if self.num_layers > 0:
@@ -110,7 +121,7 @@ class TripleMLP(nn.Module):
         #seq.append(nn.LogSoftmax())
         self.MLP = nn.Sequential(*seq)
 
-    def load_pretrained(self):
+    def _load_pretrained(self):
         #add one for unk
         print("loading pretrained embeddings")
         self.embed = nn.Embedding(len(self.word2ix)+1, self.embed_size)
@@ -123,29 +134,32 @@ class TripleMLP(nn.Module):
         #embeddings
         inp = []
         for triple in triples:
-            if self.update_embed:
-                idxs = []
-                for comp in triple:
-                    for c in comp.split():
-                        idxs.append(self.word2ix[c] if c in self.word2ix else len(self.word2ix))
-                embeds = self.embed(torch.LongTensor(idxs).to(self.device))
+            if self.trip_embeds:
+                inp.append(self.trip2vec[tuple(triple)])
             else:
-                #embeds = torch.Tensor(self.elmo_embeds[' '.join(triple)])
-                embeds = []
-                for comp in triple:
-                    for c in comp.split():
-                        embeds.append(torch.Tensor(self.word2vec[c]).squeeze().to(self.device))
-
-            #combine multi word wholes or parts
-            if ' ' in triple[0] or ' ' in triple[1]:
-                embeds = self.combine_embeds(triple, embeds)
-                inp.append(torch.cat(embeds))
-            else:
-                if type(embeds) is list:
-                    embeds = torch.cat(embeds)
+                if self.update_embed:
+                    idxs = []
+                    for comp in triple:
+                        for c in comp.split():
+                            idxs.append(self.word2ix[c] if c in self.word2ix else len(self.word2ix))
+                    embeds = self.embed(torch.LongTensor(idxs).to(self.device))
                 else:
-                    embeds = embeds.view(-1)
-                inp.append(embeds)
+                    #embeds = torch.Tensor(self.elmo_embeds[' '.join(triple)])
+                    embeds = []
+                    for comp in triple:
+                        for c in comp.split():
+                            embeds.append(torch.Tensor(self.word2vec[c]).squeeze().to(self.device))
+
+                #combine multi word wholes or parts
+                if ' ' in triple[0] or ' ' in triple[1]:
+                    embeds = self.combine_embeds(triple, embeds)
+                    inp.append(torch.cat(embeds))
+                else:
+                    if type(embeds) is list:
+                        embeds = torch.cat(embeds)
+                    else:
+                        embeds = embeds.view(-1)
+                    inp.append(embeds)
 
         #the rest
         inp = F.dropout(torch.stack(inp), p=self.dropout)
@@ -274,7 +288,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to train file')
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
-    parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'word2vec'], help='type of pretrained embedding to use')
+    parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size (default: 128)')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (default: 2; 0 = do LogReg)')
