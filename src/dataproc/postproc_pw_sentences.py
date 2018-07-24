@@ -73,6 +73,7 @@ def get_poss_sents(fn):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("mode", choices=['of', 'poss'])
+parser.add_argument("data", choices=['umbc', 'giga'])
 parser.add_argument("processes", type=int)
 args = parser.parse_args()
 
@@ -81,14 +82,14 @@ nlp.tokenizer = WhitespaceTokenizer(nlp.vocab)
 
 HOME = '/auto/nlg-05/jgm_234/'
 DATA = os.path.join(HOME, 'commonsense-part-whole/data/')
-GIGA = os.path.join(DATA, 'gigaword5-treebank')
+PATH = os.path.join(DATA, 'gigaword5-treebank' if args.data == 'giga' else 'umbc-webbased-parsed')
 
 wholes = set([line.strip().split(',')[0] for line in open(os.path.join(DATA, 'annotated/full_all.csv'))])
 parts = set([line.strip().split(',')[1] for line in open(os.path.join(DATA, 'annotated/full_all.csv'))])
 pws = set([(line.strip().split(',')[0], line.strip().split(',')[1]) for line in open(os.path.join(DATA, 'annotated/full_all.csv'))])
 
 pw2sents = defaultdict(list)
-files = [os.path.join(GIGA, d) for d in os.listdir(GIGA) if d.endswith(f'{args.mode}.pwsents')]
+files = [os.path.join(PATH, d) for d in os.listdir(PATH) if d.endswith(f'{args.mode}.pwsents')]
 
 file_fn = get_of_sents if args.mode == 'of' else get_poss_sents
 
@@ -98,16 +99,16 @@ for ix,(res, fn) in enumerate(pool.imap_unordered(file_fn, files)):
     pw2sents.update(res)
     fdone.append(fn)
     #save in case we get interrupted
-    if ix % 10 == 0:
-        with open(f'{args.mode}.sents.json', 'w') as of:
+    if ix % 1 == 0:
+        with open(f'{args.mode}.{args.data}.sents.json', 'w') as of:
             json.dump(dict(pw2sents), of)
-        with open(f'{args.mode}.filesdone.txt', 'w') as of:
+        with open(f'{args.mode}.{args.data}.filesdone.txt', 'w') as of:
             for fd in fdone:
                 of.write(fd + '\n')
 
-with open(f'{args.mode}.sents.json', 'w') as of:
+with open(f'{args.mode}.{args.data}sents.json', 'w') as of:
     json.dump(dict(pw2sents), of)
 
-with open(f'{args.mode}.filesdone.txt', 'w') as of:
+with open(f'{args.mode}.{args.data}filesdone.txt', 'w') as of:
     for fd in fdone:
         of.write(fd + '\n')
