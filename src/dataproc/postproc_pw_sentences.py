@@ -96,7 +96,9 @@ file_fn = get_of_sents if args.mode == 'of' else get_poss_sents
 pool = Pool(processes=args.processes)
 fdone = []
 for ix,(res, fn) in enumerate(pool.imap_unordered(file_fn, files)):
-    pw2sents.update(res)
+    for pw, sents in res.items():
+        pw2sents[pw].extend(sents)
+    #pw2sents.update(res)
     fdone.append(fn)
     #save in case we get interrupted
     if ix % 1 == 0:
@@ -106,9 +108,9 @@ for ix,(res, fn) in enumerate(pool.imap_unordered(file_fn, files)):
             for fd in fdone:
                 of.write(fd + '\n')
 
-with open(f'{args.mode}.{args.data}sents.json', 'w') as of:
+with open(f'{args.mode}.{args.data}.sents.json', 'w') as of:
     json.dump(dict(pw2sents), of)
 
-with open(f'{args.mode}.{args.data}filesdone.txt', 'w') as of:
+with open(f'{args.mode}.{args.data}.filesdone.txt', 'w') as of:
     for fd in fdone:
         of.write(fd + '\n')
