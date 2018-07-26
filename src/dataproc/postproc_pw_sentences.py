@@ -75,6 +75,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("mode", choices=['of', 'poss'])
 parser.add_argument("data", choices=['umbc', 'giga'])
 parser.add_argument("processes", type=int)
+parser.add_argument("--pickup", action="store_true")
 args = parser.parse_args()
 
 nlp = spacy.load('en', disable=['ner', 'textcat'])
@@ -88,27 +89,35 @@ wholes = set([line.strip().split(',')[0] for line in open(os.path.join(DATA, 'an
 parts = set([line.strip().split(',')[1] for line in open(os.path.join(DATA, 'annotated/full_all.csv'))])
 pws = set([(line.strip().split(',')[0], line.strip().split(',')[1]) for line in open(os.path.join(DATA, 'annotated/full_all.csv'))])
 
-pw2sents = defaultdict(list)
-files = [os.path.join(PATH, d) for d in os.listdir(PATH) if d.endswith(f'{args.mode}.pwsents')]
+if args.pickup:
+    pw2sents = defaultdict(list, json.load(open(f'{PATH}/{args.mode}.{args.data}.sents.json')))
+else:
+    pw2sents = defaultdict(list)
 
 file_fn = get_of_sents if args.mode == 'of' else get_poss_sents
 
 pool = Pool(processes=args.processes)
-fdone = []
+if args.pickup:
+    fdone = [line.strip() for line in open(f'{PATH}/{args.mode}.{args.data}.filesdone.txt')]
+else:
+    fdone = []
+files = [os.path.join(PATH, d) for d in os.listdir(PATH) if d.endswith(f'{args.mode}.pwsents') if os.path.join(PATH, d) not in fdone]
 for ix,(res, fn) in enumerate(pool.imap_unordered(file_fn, files)):
-    pw2sents.update(res)
+    for pw, sents in res.items():
+        pw2sents[pw].extend(sents)
+    #pw2sents.update(res)
     fdone.append(fn)
     #save in case we get interrupted
     if ix % 1 == 0:
-        with open(f'{args.mode}.{args.data}.sents.json', 'w') as of:
+        with open(f'{PATH}/{args.mode}.{args.data}.sents.json', 'w') as of:
             json.dump(dict(pw2sents), of)
-        with open(f'{args.mode}.{args.data}.filesdone.txt', 'w') as of:
+        with open(f'{PATH}/{args.mode}.{args.data}.filesdone.txt', 'w') as of:
             for fd in fdone:
                 of.write(fd + '\n')
 
-with open(f'{args.mode}.{args.data}sents.json', 'w') as of:
+with open(f'{PATH}/{args.mode}.{args.data}.sents.json', 'w') as of:
     json.dump(dict(pw2sents), of)
 
-with open(f'{args.mode}.{args.data}filesdone.txt', 'w') as of:
+with open(f'{PATH}/{args.mode}.{args.data}.filesdone.txt', 'w') as of:
     for fd in fdone:
         of.write(fd + '\n')
