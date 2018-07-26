@@ -19,12 +19,13 @@ weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_51
 
 print("loading elmo")
 elmo = Elmo(options_file, weight_file, 1, dropout=0)
+print("done")
 
 #just the tokenizer
 nlp = spacy.load('en', disable=['tagger', 'parser', 'ner', 'textcat'])
 
 batch_size = 32
-with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
+with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
     w = csv.writer(of)
     w.writerow(['whole', 'part', 'jj', 'vec'])
     with open('../../data/annotated/snli_style_feats.jsonl') as f:
@@ -40,7 +41,12 @@ with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
             part, whole, jj = obj['part'], obj['whole'], obj['jj']
             prem_tokenized = [tok.text.lower() for tok in nlp(obj['sentence1'])]
             if len(whole.split()) == 1:
-                whole_idx = prem_tokenized.index(whole)
+                try:
+                    whole_idx = prem_tokenized.index(whole)
+                except:
+                    #this happens for 't-shirt', but only in spacy's tokenizer (which, why am I using theirs again...)
+                    prem_tokenized = [tok for tok in nltk.word_tokenize(obj['sentence1'])]
+                    whole_idx = prem_tokenized.index(whole)
             else:
                 whole1, whole2 = whole.split()
                 try:
@@ -89,3 +95,22 @@ with open('../../data/annotated/elmo_snli_contextualized.data', 'w') as of:
                 prem_batch_idxs = [] #tuples
                 hyp_batch = []
                 hyp_batch_idxs = []
+                wbatch = []
+                pbatch = []
+                jbatch = []
+        #final write
+        prem_char_ids = batch_to_ids(prem_batch)
+        prem_embeds = elmo(prem_char_ids)
+        prem_embeds = prem_embeds['elmo_representations'][0]
+
+        hyp_char_ids = batch_to_ids(hyp_batch)
+        hyp_embeds = elmo(hyp_char_ids)
+        hyp_embeds = hyp_embeds['elmo_representations'][0]
+        for idx,((iw, ij), ip) in enumerate(zip(prem_batch_idxs, hyp_batch_idxs)):
+            if type(iw) is tuple:
+                #combine multiword wholes
+                whole_vec = (prem_embeds[idx][iw[0]].data + prem_embeds[idx][iw[1]].data) / 2
+            else:
+                whole_vec = prem_embeds[idx][iw].data
+            vec = np.concatenate([whole_vec , hyp_embeds[idx][ip].data, prem_embeds[idx][ij].data])
+            w.writerow([wbatch[idx], pbatch[idx], jbatch[idx]] + vec.tolist())

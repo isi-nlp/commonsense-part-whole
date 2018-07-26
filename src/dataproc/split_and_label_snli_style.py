@@ -12,7 +12,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     folds = ['train', 'dev', 'test']
-    #for fold, outwriter in zip(folds, [trw, dvw, tew]):
     trip2labels = {} #(whole, part, adj): (split, label, bin_label)
     for fold in folds:
         with open('../../data/annotated/full_%s.csv' % fold) as f:
