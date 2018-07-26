@@ -24,15 +24,24 @@ from tqdm import tqdm
 EXP_DIR = '../../experiments'
 
 class TripleDataset(Dataset):
-    def __init__(self, fname, binary=False, vocab=False):
+    def __init__(self, fname, binary, only_use):
         self.triples = pd.read_csv(fname)
         self.mode = 'train'
         self.binary = binary
         self.word2ix = None
+        if only_use == 'pw':
+            self.words = ['whole', 'part']
+        elif only_use == 'wjj':
+            self.words = ['whole', 'jj']
+        elif only_use == 'pjj':
+            self.words = ['part', 'jj']
+        else:
+            self.words = ['whole', 'part', 'jj']
 
         #make sklearn build the vocab for me
         vectorizer = CountVectorizer(tokenizer=str.split)
-        self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row['whole'], row['part'], row['jj']]), axis=1)
+        #self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row['whole'], row['part'], row['jj']]), axis=1)
+        self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row[w] for w in self.words]), axis=1)
         feats = vectorizer.fit_transform(self.triples['cat'])
         self.word2ix = vectorizer.vocabulary_
 
@@ -43,12 +52,12 @@ class TripleDataset(Dataset):
         return len(self.triples)
 
     def __getitem__(self, idx):
-        triple = self.triples.iloc[idx][['whole', 'part', 'jj']].tolist()
+        triple = self.triples.iloc[idx][self.words].tolist()
         lname = 'bin_label' if self.binary else 'label'
         return triple, self.triples.iloc[idx][lname]
 
 class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary=False, embed_file=None, embed_type=None, loss_fn='cross_entropy', gpu=False, update_embed=False):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use):
         super(TripleMLP, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -62,6 +71,14 @@ class TripleMLP(nn.Module):
         self.device = torch.device('cuda') if gpu else torch.device('cpu')
         self.update_embed = update_embed
         self.trip_embeds = False
+        if only_use == 'pw':
+            self.words = ['whole', 'part']
+        elif only_use == 'wjj':
+            self.words = ['whole', 'jj']
+        elif only_use == 'pjj':
+            self.words = ['part', 'jj']
+        else:
+            self.words = ['whole', 'part', 'jj']
 
         #set up embedding layer, either with elmo or from scratch
         if embed_file:
@@ -93,7 +110,7 @@ class TripleMLP(nn.Module):
 
         #first hidden layer
         if self.num_layers > 0:
-            seq = [nn.Linear(self.embed_size*3, self.hidden_size)]
+            seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
             if self.nonlinearity == 'tanh':
                 seq.append(nn.Tanh())
             else:
@@ -116,7 +133,7 @@ class TripleMLP(nn.Module):
             out_dim = 2 if self.binary else 5
         elif self.loss_fn in ['mse', 'smooth_l1']:
             out_dim = 1
-        final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * 3
+        final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * len(self.words)
         seq.append(nn.Linear(final_input, out_dim))
         #seq.append(nn.LogSoftmax())
         self.MLP = nn.Sequential(*seq)
@@ -152,7 +169,7 @@ class TripleMLP(nn.Module):
 
                 #combine multi word wholes or parts
                 if ' ' in triple[0] or ' ' in triple[1]:
-                    embeds = self.combine_embeds(triple, embeds)
+                    embeds = self._combine_embeds(triple, embeds)
                     inp.append(torch.cat(embeds))
                 else:
                     if type(embeds) is list:
@@ -172,7 +189,7 @@ class TripleMLP(nn.Module):
             loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
         return pred, loss
 
-    def combine_embeds(self, triple, embeds):
+    def _combine_embeds(self, triple, embeds):
         #just some hard coding...
         comb_embeds = []
         if ' ' in triple[0]:
@@ -184,7 +201,8 @@ class TripleMLP(nn.Module):
         elif ' ' in triple[1]:
             comb_embeds.append(embeds[0])
             comb_embeds.append((embeds[1]+embeds[2])/2)
-            comb_embeds.append(embeds[3])
+            if len(embeds) > 3:
+                comb_embeds.append(embeds[3])
         else:
             comb_embeds = embeds
         return comb_embeds
@@ -289,6 +307,7 @@ if __name__ == "__main__":
     parser.add_argument('file', type=str, help='path to train file')
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
     parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
+    parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size (default: 128)')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (default: 2; 0 = do LogReg)')
@@ -313,11 +332,11 @@ if __name__ == "__main__":
         args.vis = Plotter(args)
     device = torch.device('cuda' if args.gpu else 'cpu')
 
-    train_set = TripleDataset(args.file, args.binary)
+    train_set = TripleDataset(args.file, args.binary, args.only_use)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
-    dev_set = TripleDataset(args.file.replace('train', 'dev'), args.binary)
+    dev_set = TripleDataset(args.file.replace('train', 'dev'), args.binary, args.only_use)
     dev_loader = DataLoader(dev_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
-    test_set = TripleDataset(args.file.replace('train', 'test'), args.binary)
+    test_set = TripleDataset(args.file.replace('train', 'test'), args.binary, args.only_use)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
 
     word2ix = train_set.word2ix
@@ -329,7 +348,7 @@ if __name__ == "__main__":
                     word2ix[word] = len(word2ix)
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn, gpu=args.gpu, update_embed=args.update_embed)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use)
     if args.test_model:
         sd = torch.load(args.test_model)
         model.load_state_dict(sd)
@@ -402,7 +421,7 @@ if __name__ == "__main__":
                 with open('%s/dev_preds.csv' % exp_dir, 'w') as of:
                     w = csv.writer(of)
                     lname = 'bin_label' if args.binary else 'label'
-                    w.writerow(['whole', 'part', 'jj', 'pred', lname])
+                    w.writerow(train_set.words + ['pred', lname])
                     for trip, pred, gold in zip(dev_trips, dev_preds, dev_golds):
                         w.writerow([*trip, pred, gold])
 
@@ -439,7 +458,7 @@ if __name__ == "__main__":
         if early_stop(metrics_dv, args.criterion, args.patience):
             print("early stopping point hit")
             #reload best model
-            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, binary=args.binary, embed_file=args.embed_file, embed_type=args.embed_type, word2ix=word2ix, loss_fn=args.loss_fn, gpu=args.gpu, update_embed=args.update_embed)
+            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use)
             sd = torch.load('%s/model_best_%s.pth' % (exp_dir, args.criterion))
             model.load_state_dict(sd)
             model.to(device)
