@@ -2,7 +2,7 @@
     Starting with elmo embeddings for a (whole, part, jj) triple, combine them with an MLP and predict
     TODO: reload best model after early stopping and predict on test
 """
-import argparse, csv, itertools, json, os, sys, time
+import argparse, csv, itertools, json, math, os, sys, time
 from collections import defaultdict
 
 import h5py
@@ -22,6 +22,13 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
 EXP_DIR = '../../experiments'
+
+def gelu(x):
+    return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+
+class GELU(nn.Module):
+    def forward(self, input):
+        return gelu(input)
 
 class TripleDataset(Dataset):
     def __init__(self, fname, binary, only_use):
@@ -57,7 +64,7 @@ class TripleDataset(Dataset):
         return triple, self.triples.iloc[idx][lname]
 
 class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb):
         super(TripleMLP, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -79,6 +86,7 @@ class TripleMLP(nn.Module):
             self.words = ['part', 'jj']
         else:
             self.words = ['whole', 'part', 'jj']
+        self.comb = comb
 
         #set up embedding layer, either with elmo or from scratch
         if embed_file:
@@ -110,11 +118,20 @@ class TripleMLP(nn.Module):
 
         #first hidden layer
         if self.num_layers > 0:
-            seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+            if self.comb == 'concat':
+                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+            else:
+                seq = [nn.Linear(self.embed_size, self.hidden_size)]
             if self.nonlinearity == 'tanh':
                 seq.append(nn.Tanh())
-            else:
+            elif self.nonlinearity == 'relu':
                 seq.append(nn.ReLU())
+            elif self.nonlinearity == 'elu':
+                seq.append(nn.ELU())
+            elif self.nonlinearity == 'gelu':
+                seq.append(GELU())
+            elif self.nonlinearity == 'selu':
+                seq.append(nn.SELU())
             seq.append(nn.Dropout(p=self.dropout))
 
             #more hidden layers
@@ -170,10 +187,20 @@ class TripleMLP(nn.Module):
                 #combine multi word wholes or parts
                 if ' ' in triple[0] or ' ' in triple[1]:
                     embeds = self._combine_embeds(triple, embeds)
-                    inp.append(torch.cat(embeds))
+                    if self.comb == 'concat':
+                        inp.append(torch.cat(embeds))
+                    elif self.comb == 'add':
+                        inp.append(sum(embeds))
+                    elif self.comb == 'mult':
+                        inp.append(embeds[0] * embeds[1] * embeds[2])
                 else:
                     if type(embeds) is list:
-                        embeds = torch.cat(embeds)
+                        if self.comb == 'concat':
+                            embeds = torch.cat(embeds)
+                        elif self.comb == 'add':
+                            embeds = sum(embeds)
+                        elif self.comb == 'mult':
+                            embeds = embeds[0] * embeds[1] * embeds[2]
                     else:
                         embeds = embeds.view(-1)
                     inp.append(embeds)
@@ -308,10 +335,11 @@ if __name__ == "__main__":
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
     parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
+    parser.add_argument('--comb', choices=['concat', 'add', 'mult'], default='concat', help='how to combine embeddings (default: concat)')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size (default: 128)')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (default: 2; 0 = do LogReg)')
-    parser.add_argument('--nonlinearity', choices=['relu', 'tanh'], default='relu', help='nonlinearity for MLP (default: tanh)')
+    parser.add_argument('--nonlinearity', choices=['relu', 'tanh', 'elu', 'gelu', 'selu'], default='relu', help='nonlinearity for MLP (default: relu)')
     parser.add_argument('--loss-fn', dest="loss_fn", choices=['mse', 'smooth_l1', 'cross_entropy'], default='cross_entropy', help='loss to minimize (default: cross_entropy)')
     parser.add_argument('--batch-size', dest='batch_size', type=int, default=16, help='batch size for training (default: 16)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 0.001)')
@@ -348,7 +376,8 @@ if __name__ == "__main__":
                     word2ix[word] = len(word2ix)
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb)
+    print(model)
     if args.test_model:
         sd = torch.load(args.test_model)
         model.load_state_dict(sd)
@@ -458,7 +487,7 @@ if __name__ == "__main__":
         if early_stop(metrics_dv, args.criterion, args.patience):
             print("early stopping point hit")
             #reload best model
-            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use)
+            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb)
             sd = torch.load('%s/model_best_%s.pth' % (exp_dir, args.criterion))
             model.load_state_dict(sd)
             model.to(device)
