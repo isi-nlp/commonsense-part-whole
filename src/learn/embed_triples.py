@@ -1,6 +1,5 @@
 """
     Starting with elmo embeddings for a (whole, part, jj) triple, combine them with an MLP and predict
-    TODO: reload best model after early stopping and predict on test
 """
 import argparse, csv, itertools, json, math, os, sys, time
 from collections import defaultdict
@@ -63,8 +62,32 @@ class TripleDataset(Dataset):
         lname = 'bin_label' if self.binary else 'label'
         return triple, self.triples.iloc[idx][lname]
 
+class TripleBboxDataset(TripleDataset):
+    def __init__(self, fname, binary, only_use):
+        super(TripleBboxDataset, self).__init__(fname, binary, only_use)
+        data_path = os.path.dirname(fname)
+        self.part_feats = json.load(open(os.path.join(data_path, 'part_feats.json')))
+        self.whole_feats = json.load(open(os.path.join(data_path, 'whole_feats.json')))
+        self.pw_feats = {pw: (feat if not np.isnan(feat) else 0.0) for pw, feat in json.load(open(os.path.join(data_path, 'pw_feats.json'))).items()}
+        self._clean_nans()
+
+    def _clean_nans(self):
+        for feat in [self.part_feats, self.whole_feats]:
+            for name, dct in feat.items():
+                for featname, val in dct.items():
+                    if np.isnan(val):
+                        feat[name][featname] = 0.0
+
+    def __getitem__(self, idx):
+        triple, label = super(TripleBboxDataset, self).__getitem__(idx)
+        whole, part, _ = triple
+        bbox_feats = [self.whole_feats[whole]['avg_w'], self.whole_feats[whole]['avg_h'],\
+                      self.part_feats[part]['avg_w'], self.part_feats[part]['avg_h'],\
+                      self.pw_feats[','.join(triple[:2])]]
+        return triple, label, bbox_feats
+
 class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         super(TripleMLP, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -87,6 +110,7 @@ class TripleMLP(nn.Module):
         else:
             self.words = ['whole', 'part', 'jj']
         self.comb = comb
+        self.bbox = bbox
 
         #set up embedding layer, either with elmo or from scratch
         if embed_file:
@@ -119,28 +143,16 @@ class TripleMLP(nn.Module):
         #first hidden layer
         if self.num_layers > 0:
             if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+                seq = [nn.Linear(self.embed_size*len(self.words)+(5 if self.bbox else 0), self.hidden_size)]
             else:
-                seq = [nn.Linear(self.embed_size, self.hidden_size)]
-            if self.nonlinearity == 'tanh':
-                seq.append(nn.Tanh())
-            elif self.nonlinearity == 'relu':
-                seq.append(nn.ReLU())
-            elif self.nonlinearity == 'elu':
-                seq.append(nn.ELU())
-            elif self.nonlinearity == 'gelu':
-                seq.append(GELU())
-            elif self.nonlinearity == 'selu':
-                seq.append(nn.SELU())
+                seq = [nn.Linear(self.embed_size+(5 if self.bbox else 0), self.hidden_size)]
+            seq = self._add_nonlinearity(seq)
             seq.append(nn.Dropout(p=self.dropout))
 
             #more hidden layers
             for _ in range(self.num_layers-1):
                 seq.append(nn.Linear(self.hidden_size, self.hidden_size))
-                if self.nonlinearity == 'tanh':
-                    seq.append(nn.Tanh())
-                else:
-                    seq.append(nn.ReLU())
+                seq = self._add_nonlinearity(seq)
                 seq.append(nn.Dropout(p=self.dropout))
         else:
             seq = []
@@ -150,10 +162,23 @@ class TripleMLP(nn.Module):
             out_dim = 2 if self.binary else 5
         elif self.loss_fn in ['mse', 'smooth_l1']:
             out_dim = 1
-        final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * len(self.words)
+        final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * len(self.words) + (5 if self.bbox else 0)
         seq.append(nn.Linear(final_input, out_dim))
         #seq.append(nn.LogSoftmax())
         self.MLP = nn.Sequential(*seq)
+
+    def _add_nonlinearity(self, seq):
+        if self.nonlinearity == 'tanh':
+            seq.append(nn.Tanh())
+        elif self.nonlinearity == 'relu':
+            seq.append(nn.ReLU())
+        elif self.nonlinearity == 'elu':
+            seq.append(nn.ELU())
+        elif self.nonlinearity == 'gelu':
+            seq.append(GELU())
+        elif self.nonlinearity == 'selu':
+            seq.append(nn.SELU())
+        return seq
 
     def _load_pretrained(self):
         #add one for unk
@@ -164,7 +189,7 @@ class TripleMLP(nn.Module):
         embeddings = np.concatenate([embeddings, np.random.uniform(-.2, .2, size=(1,self.embed_size))])
         self.embed.weight.data.copy_(torch.from_numpy(embeddings))
 
-    def forward(self, triples, labels):
+    def forward(self, triples, labels, bbox_fs=None):
         #embeddings
         inp = []
         for triple in triples:
@@ -206,7 +231,10 @@ class TripleMLP(nn.Module):
                     inp.append(embeds)
 
         #the rest
-        inp = F.dropout(torch.stack(inp), p=self.dropout)
+        inp = torch.stack(inp)
+        if self.bbox and bbox_fs is not None:
+            inp = torch.cat([inp, torch.Tensor(bbox_fs)], 1)
+        inp = F.dropout(inp, p=self.dropout)
         pred = self.MLP(inp)
         if self.loss_fn == 'cross_entropy':
             loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
@@ -233,6 +261,7 @@ class TripleMLP(nn.Module):
         else:
             comb_embeds = embeds
         return comb_embeds
+
 
 #define a plotter object to make it simple to carry many window objects around
 class Plotter:
@@ -287,7 +316,7 @@ class Plotter:
             self.vis.text("%s: %s" % (str(key), str(val)), win=self.text, append=True)
 
 def tuple_collate(batch):
-    return [b[0] for b in batch], [b[1] for b in batch]
+    return [[b[i] for b in batch] for i in range(len(batch[0]))]
 
 def early_stop(metrics, criterion, patience):
     if not np.all(np.isnan(metrics[criterion])):
@@ -348,6 +377,7 @@ if __name__ == "__main__":
     parser.add_argument('--patience', type=int, default=5, help='number of epochs without dev improvement in criterion metric befor early stopping (default: 5)')
     parser.add_argument('--train-check-interval', dest='train_check_interval', type=int, default=5, help='number of epochs between checking train metrics (default: 5)')
     parser.add_argument('--update-embed', dest='update_embed', action='store_const', const=True, help='flag to update ELMo embeddings (TODO)')
+    parser.add_argument('--bbox-feats', dest='bbox_feats', action='store_const', const=True, help='flag to use bounding box features')
     parser.add_argument('--test-model', dest='test_model', type=str, help='path to saved model file')
     parser.add_argument('--binary', action='store_const', const=True, help='flag to predict binary labels instead of ordinal labels')
     parser.add_argument('--gpu', action='store_const', const=True, help='flag to use gpu')
@@ -360,11 +390,12 @@ if __name__ == "__main__":
         args.vis = Plotter(args)
     device = torch.device('cuda' if args.gpu else 'cpu')
 
-    train_set = TripleDataset(args.file, args.binary, args.only_use)
+    dset = TripleBboxDataset if args.bbox_feats else TripleDataset
+    train_set = dset(args.file, args.binary, args.only_use)
+    dev_set = dset(args.file.replace('train', 'dev'), args.binary, args.only_use)
+    test_set = dset(args.file.replace('train', 'test'), args.binary, args.only_use)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
-    dev_set = TripleDataset(args.file.replace('train', 'dev'), args.binary, args.only_use)
     dev_loader = DataLoader(dev_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
-    test_set = TripleDataset(args.file.replace('train', 'test'), args.binary, args.only_use)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
 
     word2ix = train_set.word2ix
@@ -376,7 +407,7 @@ if __name__ == "__main__":
                     word2ix[word] = len(word2ix)
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb)
+    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     print(model)
     if args.test_model:
         sd = torch.load(args.test_model)
@@ -396,20 +427,30 @@ if __name__ == "__main__":
         if not dont_train:
             model.train()
             train_golds, train_preds = [], []
-            for batch_ix, (triples, labels) in tqdm(enumerate(train_loader)):
-                optimizer.zero_grad()
-                preds, loss = model(triples, labels)
-                train_golds.extend(labels)
-                if args.loss_fn == 'cross_entropy':
-                    train_preds.extend([pred.argmax().item() for pred in preds])
-                elif args.loss_fn in ['mse', 'smooth_l1']:
-                    train_preds.extend([pred.round().long().item() for pred in preds])
+            try:
+                for batch_ix, data in tqdm(enumerate(train_loader)):
+                    optimizer.zero_grad()
+                    if args.bbox_feats:
+                        triples, labels, bbox_fs = data
+                        preds, loss = model(triples, labels, bbox_fs=bbox_fs)
+                    else:
+                        triples, labels = data
+                        preds, loss = model(triples, labels)
+                    train_golds.extend(labels)
+                    if args.loss_fn == 'cross_entropy':
+                        train_preds.extend([pred.argmax().item() for pred in preds])
+                    elif args.loss_fn in ['mse', 'smooth_l1']:
+                        train_preds.extend([pred.round().long().item() for pred in preds])
 
-                loss.backward()
-                optimizer.step()
-                losses.append(loss.item())
-                if not args.no_plot:
-                    args.vis.plot_batch_loss(losses, 10)
+                    loss.backward()
+                    if torch.isnan(model.MLP[0].weight.grad).any().item() == 1:
+                        import pdb; pdb.set_trace()
+                    optimizer.step()
+                    losses.append(loss.item())
+                    if not args.no_plot:
+                        args.vis.plot_batch_loss(losses, 10)
+            except KeyboardInterrupt:
+                import pdb; pdb.set_trace()
             metrics_tr['loss'] = np.append(metrics_tr['loss'], np.mean(losses))
             print("Loss: %.4f" % np.mean(losses))
 
@@ -417,8 +458,13 @@ if __name__ == "__main__":
         with torch.no_grad():
             model.eval()
             dev_trips, dev_golds, dev_preds = [], [], []
-            for batch_ix, (triples, labels) in tqdm(enumerate(dev_loader)):
-                preds, loss = model(triples, labels)
+            for batch_ix, data in tqdm(enumerate(dev_loader)):
+                if args.bbox_feats:
+                    triples, labels, bbox_fs = data
+                    preds, loss = model(triples, labels, bbox_fs=bbox_fs)
+                else:
+                    triples, labels = data
+                    preds, loss = model(triples, labels)
                 dev_trips.extend(triples)
                 dev_golds.extend(labels)
                 if args.loss_fn == 'cross_entropy':
@@ -487,7 +533,7 @@ if __name__ == "__main__":
         if early_stop(metrics_dv, args.criterion, args.patience):
             print("early stopping point hit")
             #reload best model
-            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb)
+            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
             sd = torch.load('%s/model_best_%s.pth' % (exp_dir, args.criterion))
             model.load_state_dict(sd)
             model.to(device)
