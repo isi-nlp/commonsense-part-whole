@@ -1,5 +1,5 @@
 """
-    Given an input set of sentences, get POS-tags with spacy and get token match features
+    Given an input set of sentences, get POS-tags with spacy and get token match features (for DIIN)
 """
 import argparse
 import csv

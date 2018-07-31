@@ -141,11 +141,13 @@ class TripleMLP(nn.Module):
             self._load_pretrained()
 
         #first hidden layer
+        #bbox_dim = 5 if self.bbox else 0
+        bbox_dim = 0
         if self.num_layers > 0:
             if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words)+(5 if self.bbox else 0), self.hidden_size)]
+                seq = [nn.Linear(self.embed_size*len(self.words) + bbox_dim, self.hidden_size)]
             else:
-                seq = [nn.Linear(self.embed_size+(5 if self.bbox else 0), self.hidden_size)]
+                seq = [nn.Linear(self.embed_size + bbox_dim, self.hidden_size)]
             seq = self._add_nonlinearity(seq)
             seq.append(nn.Dropout(p=self.dropout))
 
@@ -162,10 +164,10 @@ class TripleMLP(nn.Module):
             out_dim = 2 if self.binary else 5
         elif self.loss_fn in ['mse', 'smooth_l1']:
             out_dim = 1
-        final_input = self.hidden_size if self.num_layers > 0 else self.embed_size * len(self.words) + (5 if self.bbox else 0)
-        seq.append(nn.Linear(final_input, out_dim))
-        #seq.append(nn.LogSoftmax())
         self.MLP = nn.Sequential(*seq)
+        bbox_dim = 5
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        self.final = nn.Linear(final_input, out_dim)
 
     def _add_nonlinearity(self, seq):
         if self.nonlinearity == 'tanh':
@@ -232,10 +234,12 @@ class TripleMLP(nn.Module):
 
         #the rest
         inp = torch.stack(inp)
-        if self.bbox and bbox_fs is not None:
-            inp = torch.cat([inp, torch.Tensor(bbox_fs)], 1)
+        #if self.bbox and bbox_fs is not None:
+        #    inp = torch.cat([inp, torch.Tensor(bbox_fs)], 1)
         inp = F.dropout(inp, p=self.dropout)
-        pred = self.MLP(inp)
+        logits = self.MLP(inp)
+        logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
         if self.loss_fn == 'cross_entropy':
             loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
         elif self.loss_fn == 'mse':

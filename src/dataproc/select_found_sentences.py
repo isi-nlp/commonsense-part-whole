@@ -1,6 +1,6 @@
 """
     Given gigaword, gutenberg, snli input, combine results of all.
-    Select (1? 2-3?) sentences per whole-adj, combine with manufactured part-adj hypothesis.
+    Select (1? 2-3?) sentences per whole-adj, combine with retrieved or manufactured part-adj hypotheses.
 """
 import csv
 import json
