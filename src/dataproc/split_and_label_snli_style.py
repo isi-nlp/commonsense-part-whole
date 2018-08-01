@@ -2,7 +2,7 @@
     Read snli style sentence data for each part-whole-adjective. 
     Copy labels and splits from that that exists for triple datasets
 """
-import argparse, csv, random
+import argparse, csv, json, random
 import numpy as np
 
 if __name__ == '__main__':
@@ -35,16 +35,45 @@ if __name__ == '__main__':
     
     with open(args.file) as f:
         trip2sentpairs = json.load(f)
-        for trip, sentpairs in trip2sentpairs.items():
+        for trip, (split, label, bin_label) in trip2labels.items():
             whole, part, jj = trip
-            if trip in trip2labels:
-                split, label, bin_label = trip2labels[trip]
+            joined = ','.join(trip)
+            if joined in trip2sentpairs:
+                for premise, hypothesis in trip2sentpairs[joined]:
+                    if split == 'train':
+                        trw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                    if split == 'dev':
+                        dvw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                    if split == 'test':
+                        tew.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+            else:
+                #I think these are WJ's missing because we didn't find sentences for them?
+                det = 'an' if jj[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
+                context = f"There is {det} {jj} {whole}."
+                hyp = f"The {whole}'s {part} is {jj}."
                 if split == 'train':
-                    trw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+                    trw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
                 if split == 'dev':
-                    dvw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+                    dvw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
                 if split == 'test':
-                    tew.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+                    tew.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+
+                
+        #for trip, sentpairs in trip2sentpairs.items():
+        #    trip = tuple(trip.split(','))
+        #    whole, part, jj = trip
+        #    if trip in trip2labels:
+        #        split, label, bin_label = trip2labels[trip]
+        #        for premise, hypothesis in sentpairs:
+        #            if split == 'train':
+        #                trw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+        #            if split == 'dev':
+        #                dvw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+        #            if split == 'test':
+        #                tew.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+        #    else:
+        #        if ' ' in whole:
+        #            print(trip)
 
         #r = csv.reader(f, delimiter='\t')
         ##header
