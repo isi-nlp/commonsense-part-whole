@@ -34,19 +34,31 @@ if __name__ == '__main__':
     tew.writerow(['whole', 'part', 'jj', 'hypothesis', 'context', 'label', 'bin_label'])
     
     with open(args.file) as f:
-        r = csv.reader(f, delimiter='\t')
-        #header
-        next(r)
-        for row in r:
-            whole, part, jj = tuple(row[:3])
-            if (whole, part, jj) in trip2labels:
-                split, label, bin_label = trip2labels[(whole, part, jj)]
+        trip2sentpairs = json.load(f)
+        for trip, sentpairs in trip2sentpairs.items():
+            whole, part, jj = trip
+            if trip in trip2labels:
+                split, label, bin_label = trip2labels[trip]
                 if split == 'train':
                     trw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
                 if split == 'dev':
                     dvw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
                 if split == 'test':
                     tew.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+
+        #r = csv.reader(f, delimiter='\t')
+        ##header
+        #next(r)
+        #for row in r:
+        #    whole, part, jj = tuple(row[:3])
+        #    if (whole, part, jj) in trip2labels:
+        #        split, label, bin_label = trip2labels[(whole, part, jj)]
+        #        if split == 'train':
+        #            trw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+        #        if split == 'dev':
+        #            dvw.writerow([whole, part, jj, row[3], row[4], label, bin_label])
+        #        if split == 'test':
+        #            tew.writerow([whole, part, jj, row[3], row[4], label, bin_label])
 
     trf.close()
     dvf.close()

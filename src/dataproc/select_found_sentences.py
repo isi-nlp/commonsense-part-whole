@@ -5,6 +5,8 @@
 import csv
 import json
 import os
+import sys
+import time
 from collections import defaultdict, namedtuple
 from multiprocessing import Pool
 from random import shuffle
@@ -36,8 +38,36 @@ def validate(whole, adj, sent):
                     import pdb; pdb.set_trace()
     return False
 
+def extract_sent(part, whole, sent):
+    for s in sent.split(' . '):
+        part_found = False
+        whole_found = False
+        for word in s.split():
+            if word.lower() == whole:
+                whole_found = True
+            if word.lower() == part:
+                part_found = True
+            if whole_found and part_found:
+                #add back the period
+                return s + ' .'
+    return None
+
 if __name__ == "__main__":
+    if not sys.argv[1].isnumeric():
+        print(f"usage: python select_found_sentences.py [cpu count]")
     sentsource = namedtuple('sentsource', ['sentence', 'source'])
+
+    print("reading pw sentences")
+    pwsents = defaultdict(set)
+    with open('../../data/candidates/pw_sents.json') as f:
+        obj = json.load(f)
+        for whole, dct in obj.items():
+            for part, sents in dct.items():
+                #filter out extra sentences b/c there are often several for some reason
+                for sent in sents:
+                    valid_sent = extract_sent(part, whole, sent)
+                    if valid_sent is not None:
+                        pwsents[(whole, part)].add(valid_sent)
 
     print("reading captions")
     wjjs = defaultdict(set)
@@ -70,11 +100,12 @@ if __name__ == "__main__":
 
     print("reading part whole relations")
     whole2parts = defaultdict(set)
-    with open('../../data/candidates/vis_uniq_less_colors.csv') as f:
+    pw2jjs = defaultdict(set)
+    with open('../../data/annotated/full_all.csv') as f:
         r = csv.reader(f)
         for row in r:
             whole2parts[row[0]].add(row[1])
-
+            pw2jjs[(row[0], row[1])].add(row[2])
 
     def get_lines(item):
         tup, sentsources = item
@@ -91,27 +122,66 @@ if __name__ == "__main__":
         shuffle(sentences)
         sents = sentences[:142]
         whole, jj = tup
-        rows = []
-        if len(sents) > 0:
-            #write one line and one sentence per part
-            for i,part in enumerate(whole2parts[whole]):
-                hypothesis = "The {}'s {} is {}.".format(whole, part, jj)
+        trip2sentpairs = defaultdict(list)
+
+        #for each triple, write up to 5 natural sentence pairs. Use manufactured if none available
+        contexts_used = 0
+        for part in whole2parts[whole]:
+            hypotheses = list(pwsents[(whole, part)])
+            if len(hypotheses) > 0:
+                shuffle(hypotheses)
+                for i, hyp in enumerate(hypotheses[:5]):
+
+                    if len(sents) > 0:
+                        context = sents[min(contexts_used, len(sents)-1)]
+                    else:
+                        det = 'an' if jj[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
+                        context = f"There is {det} {jj} {whole}."
+
+                    trip2sentpairs[','.join([whole, part, jj])].append([context, hyp])
+                    contexts_used += 1
+            else:
+                hyp = "The {}'s {} is {}.".format(whole, part, jj)
+
+                if len(sents) > 0:
+                    context = sents[min(contexts_used, len(sents)-1)]
+                else:
+                    det = 'an' if jj[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
+                    context = f"There is {det} {jj} {whole}."
+
                 #context sentence for a part is the next one, unless there are more parts than sentences, in which case repeat the last one
-                rows.append([whole, part, jj, hypothesis, sents[min(i,len(sents)-1)]])
-        return rows
+                trip2sentpairs[','.join([whole, part, jj])].append([context, hyp])
+                contexts_used += 1
+        return trip2sentpairs
 
-    to_write = []
-    pool = Pool(processes=os.cpu_count())
-    for rows in pool.imap_unordered(get_lines, wjjs.items()):
-        to_write.extend(rows)
-        if len(to_write) // 100 != (len(to_write) - len(rows)) // 100:
-            print(len(to_write))
+    trip2sentpairs = defaultdict(list)
+    print(f"num wjs: {len(wjjs)}")
+    #num_pairs = 0
+    pool = Pool(processes=int(sys.argv[1]))
+    for num_wjjs,dct in enumerate(pool.imap_unordered(get_lines, wjjs.items())):
+        #num_pairs_batch = 0
+        if type(dct) is list:
+            continue
+            #import pdb; pdb.set_trace()
+        for trip, sentpairs in dct.items():
+            trip2sentpairs[trip].extend(sentpairs)
+            #num_pairs += len(sentpairs)
+            #num_pairs_batch += len(sentpairs)
+        #if num_pairs // 100 != (num_pairs - num_pairs_batch) // 100:
+        if num_wjjs % 100 == 0:
+            print(num_wjjs)
+            #save in case we get interrupted
+        #if num_pairs // 10000 != (num_pairs - num_pairs_batch) // 10000:
+            with open('../../data/candidates/trip2sentpairs.json', 'w') as of:
+                json.dump(trip2sentpairs, of)
 
-    with open('../../data/candidates/snli-style.csv', 'w') as of:
-        w = csv.writer(of, delimiter='\t')
-        header = ['whole', 'part', 'adj', 'hypothesis', 'context']
-        #header.extend(['context{}'.format(i+1) for i in range(10)])
-        w.writerow(header)
-        for line in to_write:
-            w.writerow(line)
+    with open('../../data/candidates/trip2sentpairs.json', 'w') as of:
+        json.dump(trip2sentpairs, of)
+    #with open('../../data/candidates/snli-style.csv', 'w') as of:
+    #    w = csv.writer(of, delimiter='\t')
+    #    header = ['whole', 'part', 'adj', 'hypothesis', 'context']
+    #    #header.extend(['context{}'.format(i+1) for i in range(10)])
+    #    w.writerow(header)
+    #    for line in to_write:
+    #        w.writerow(line)
         
