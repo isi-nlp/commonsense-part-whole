@@ -1,7 +1,7 @@
 """
-    Look thru all gigaword docs for sentences with [adj whole] or [whole adj]
+    Look thru all gigaword docs for sentences with [adj whole/part] or [whole/part adj]
 """
-import csv, json, os, random, re, sys
+import argparse, csv, json, os, random, re, sys
 from collections import OrderedDict
 from multiprocessing import Pool
 
@@ -10,13 +10,13 @@ from tqdm import tqdm
 import xmltodict
 
 def process_dir(dirname):
-    whole_jjs = {}
+    noun_jjs = {}
     with open(sys.argv[1]) as f:
         r = csv.reader(f)
         #header
         next(r)
         for row in r:
-            whole_jjs[(row[0], row[2])] = set()
+            noun_jjs[(row[0], row[2])] = set()
 
     sentences_found = 0
     num_docs = 0
@@ -82,65 +82,75 @@ def process_dir(dirname):
                         w1l, w2l = w1.lower(), w2.lower()
                         #consider both possiblities - red car and car red. 
                         display_update = False
-                        if (w2l, w1l) in whole_jjs:
-                            whole_jjs[(w2l,w1l)].add(sent)
+                        if (w2l, w1l) in noun_jjs:
+                            noun_jjs[(w2l,w1l)].add(sent)
                             sentences_found += 1
                             display_update = sentences_found % 100 == 0
-                        elif  (w1l, w2l) in whole_jjs:
-                            whole_jjs[(w1l,w2l)].add(sent)
+                        elif  (w1l, w2l) in noun_jjs:
+                            noun_jjs[(w1l,w2l)].add(sent)
                             sentences_found += 1
                             display_update = sentences_found % 100 == 0
                         else:
-                            #also look for multi-word wholes
+                            #also look for multi-word nouns
                             multi_part = ' '.join((w1l,w2l))
-                            if word_ix + 2 <= len(words) - 1 and (multi_part, words[word_ix + 2].lower()) in whole_jjs:
-                                whole_jjs[(multi_part, words[word_ix + 2].lower())].add(sent)
+                            if word_ix + 2 <= len(words) - 1 and (multi_part, words[word_ix + 2].lower()) in noun_jjs:
+                                noun_jjs[(multi_part, words[word_ix + 2].lower())].add(sent)
                                 sentences_found += 1
                                 display_update = sentences_found % 100 == 0
-                            elif word_ix - 1 >= 0 and (multi_part, words[word_ix - 1].lower()) in whole_jjs:
-                                whole_jjs[(multi_part, words[word_ix - 1].lower())].add(sent)
+                            elif word_ix - 1 >= 0 and (multi_part, words[word_ix - 1].lower()) in noun_jjs:
+                                noun_jjs[(multi_part, words[word_ix - 1].lower())].add(sent)
                                 sentences_found += 1
                                 display_update = sentences_found % 100 == 0
 
                         if display_update:
                             print("%s: %d sentences found" % (dirname, sentences_found))
-                            wjjs_with_context = len([tup for tup,snt in whole_jjs.items() if len(snt) > 0])
-                            print("%s: %d whole-jjs with sentences" % (dirname, wjjs_with_context))
+                            njjs_with_context = len([tup for tup,snt in noun_jjs.items() if len(snt) > 0])
+                            print("%s: %d noun-jjs with sentences" % (dirname, njjs_with_context))
 
             num_docs += 1
             #just write periodically idc
             if num_docs % 100 == 0:
-                with open('../../data/candidates/wj-gigaword-sentences-%s.json' % dirname, 'w') as of:
-                    #put whole-jj into a single string and do set->list so the json works
-                    wjj = {', '.join(tup):list(snts) for tup,snts in whole_jjs.items()}
-                    json.dump(wjj, of, indent=1)
+                with open(filename, 'w') as of:
+                    #put noun-jj into a single string and do set->list so the json works
+                    njj = {', '.join(tup):list(snts) for tup,snts in noun_jjs.items()}
+                    json.dump(njj, of, indent=1)
  
-    with open('../../data/candidates/wj-gigaword-sentences-%s.json' % dirname, 'w') as of:
-        #put whole-jj into a single string and do set->list so the json works
-        wjj = {', '.join(tup):list(snts) for tup,snts in whole_jjs.items()}
-        json.dump(wjj, of, indent=1)
-    return whole_jjs
+    with open(filename, 'w') as of:
+        #put noun-jj into a single string and do set->list so the json works
+        njj = {', '.join(tup):list(snts) for tup,snts in noun_jjs.items()}
+        json.dump(njj, of, indent=1)
+    return noun_jjs
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file", type=str, help="triples file")
+    parser.add_argument("cpu_count", type=int, help="num cpus to use")
+    parser.add_argument("noun", choices=['part', 'whole'], help="look for whole-jj or part-jj?")
+    args = parser.parse_args()
 
     BASE_DIR = '../../../e/gigaword_eng_5/data'
+    name = 'wj' if args.noun == 'whole' else 'pj'
+    filename = f'../../data/candidates/{name}-gigaword-sentences.json'
 
     dirs = os.listdir(BASE_DIR)
-    whole_jjs = {}
-    with open(sys.argv[1]) as f:
+    noun_jjs = {}
+    with open(args.file) as f:
         r = csv.reader(f)
         #header
         next(r)
         for row in r:
-            whole_jjs[(row[0], row[2])] = set()
+            if args.noun == 'part':
+                noun_jjs[(row[1], row[2])] = set()
+            else:
+                noun_jjs[(row[0], row[2])] = set()
 
-    pool = Pool(processes=7)
+    pool = Pool(processes=int(args.cpu_count))
     for dir_jjs in pool.imap_unordered(process_dir, dirs):
         for tup,snts in dir_jjs.items():
-            whole_jjs[tup].update(snts)
+            noun_jjs[tup].update(snts)
 
-    with open('../../data/candidates/wj-gigaword-sentences.json', 'w') as of:
-        #put whole-jj into a single string and do set->list so the json works
-        wjj = {', '.join(tup):list(snts) for tup,snts in whole_jjs.items()}
-        json.dump(wjj, of, indent=1)
+    with open(filename, 'w') as of:
+        #put noun-jj into a single string and do set->list so the json works
+        njj = {', '.join(tup):list(snts) for tup,snts in noun_jjs.items()}
+        json.dump(njj, of, indent=1)
 
