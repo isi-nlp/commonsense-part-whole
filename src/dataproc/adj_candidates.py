@@ -50,7 +50,7 @@ for img in attrs:
  
 print("reading part-whole candidates")
 whole2parts = defaultdict(set)
-with open('../../data/nouns/%s' % args.pw_dataset) as f:
+with open(args.pw_dataset) as f:
     delim = ',' if args.non_visual else '\t'
     r = csv.reader(f, delimiter=delim)
     #header
@@ -63,8 +63,9 @@ wholes = set(whole2parts.keys())
 if args.non_visual:
     triples = set([tuple(row) for row in csv.reader(open('../../data/adjectives/vg_only_mturk_candidates_mwe.csv'))])
 
+COLORS = set(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'violet', 'black', 'white', 'brown', 'gray', 'grey', 'pink'])
 #take top 5 adjectives for the whole
-with open('../../data/adjectives/%s' % args.out_file, 'w') as of:
+with open(args.out_file, 'w') as of:
     w = csv.writer(of)
     for whole in tqdm(wholes):
 
@@ -88,20 +89,31 @@ with open('../../data/adjectives/%s' % args.out_file, 'w') as of:
             print("whole had no jj's found: %s" % whole)
             continue
 
-        for jj in jjs:
-            #filter jjs where the jj-whole forms a common expression (in wordnet) (e.g. dutch oven, sick bed)
-            if len(wn.synsets('_'.join([jj, whole_for_adj]))) == 0 and len(wn.synsets(''.join([jj, whole_for_adj]))) == 0:
-                for part in whole2parts[whole]:
+        for part in whole2parts[whole]:
+            found_color = False
+            for jj in jjs:
+                #filter jjs where the jj-whole forms a common expression (in wordnet) (e.g. dutch oven, sick bed)
+                if len(wn.synsets('_'.join([jj, whole_for_adj]))) == 0 and len(wn.synsets(''.join([jj, whole_for_adj]))) == 0:
                     if (not args.non_visual) or ((whole, part, jj) not in triples):
                         #optionally filter to adjectives that have been applied to the part (in n-grams) as well
                         if part in noun2jjs:
                             if jj in noun2jjs[part]:
                                 if part != whole and '.' not in whole and '.' not in part:
-                                    w.writerow([whole, part, jj])
+                                    if jj in COLORS:
+                                        if not found_color:
+                                            w.writerow([whole, part, jj])
+                                            found_color = True
+                                    else:
+                                        w.writerow([whole, part, jj])
                         elif ' ' in part and part.split(' ')[1] in noun2jjs:
                             if jj in noun2jjs[part.split(' ')[1]]:
                                 if part != whole and '.' not in whole and '.' not in part:
-                                    w.writerow([whole, part, jj])
+                                    if jj in COLORS:
+                                        if not found_color:
+                                            w.writerow([whole, part, jj])
+                                            found_color = True
+                                    else:
+                                        w.writerow([whole, part, jj])
 
 #put jjs in vg_imgs directories
 #for whole in wholes:
