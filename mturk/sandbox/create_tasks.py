@@ -39,7 +39,7 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
     form = "<![CDATA[\n" + form_str + "\n\n]]>" #dumb hack to make the unparse() output valid
     full['HTMLQuestion']['HTMLContent'] = form
     prompt = html.unescape(xmltodict.unparse(full))
-    title = 'Common sense reasoning %s' % title #TODO: remove the number
+    title = 'Common sense reasoning %s' % title 
     if not dryrun:
         new_hit = mturk.create_hit(
                                    Title = title,

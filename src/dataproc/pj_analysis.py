@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('full_all.csv')
+df = pd.read_csv('../../data/annotated/full_all.csv')
 
 pj = df.groupby(['part', 'jj']).count()
 
@@ -17,3 +17,4 @@ allsame = dfk.groupby(['part', 'jj']).apply(lambda group: all(group['bin_label']
 
 wholesame = pd.concat([numwholes, allsame], axis=1)
 wholesame.groupby('bin_label').hist()
+

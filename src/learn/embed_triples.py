@@ -141,13 +141,11 @@ class TripleMLP(nn.Module):
             self._load_pretrained()
 
         #first hidden layer
-        #bbox_dim = 5 if self.bbox else 0
-        bbox_dim = 0
         if self.num_layers > 0:
             if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words) + bbox_dim, self.hidden_size)]
+                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
             else:
-                seq = [nn.Linear(self.embed_size + bbox_dim, self.hidden_size)]
+                seq = [nn.Linear(self.embed_size, self.hidden_size)]
             seq = self._add_nonlinearity(seq)
             seq.append(nn.Dropout(p=self.dropout))
 
@@ -165,7 +163,7 @@ class TripleMLP(nn.Module):
         elif self.loss_fn in ['mse', 'smooth_l1']:
             out_dim = 1
         self.MLP = nn.Sequential(*seq)
-        bbox_dim = 5
+        bbox_dim = 5 if self.bbox else 0
         final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
         self.final = nn.Linear(final_input, out_dim)
 
@@ -238,7 +236,8 @@ class TripleMLP(nn.Module):
         #    inp = torch.cat([inp, torch.Tensor(bbox_fs)], 1)
         inp = F.dropout(inp, p=self.dropout)
         logits = self.MLP(inp)
-        logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
         pred = self.final(logits)
         if self.loss_fn == 'cross_entropy':
             loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
