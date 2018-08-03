@@ -14,7 +14,10 @@ def process_dset(fname):
         #header
         next(r)
         for row in r:
-            noun_jjs[(row[0], row[2])] = set()
+            if args.noun == 'part':
+                noun_jjs[(row[1], row[2])] = set()
+            else:
+                noun_jjs[(row[0], row[2])] = set()
 
     with open(fname) as f:
         r = csv.reader(f, delimiter='\t')
@@ -65,7 +68,7 @@ if __name__ == "__main__":
             else:
                 noun_jjs[(row[0], row[2])] = set()
 
-    dsets = ['/home/jamesm/commonsense-part-whole/data/snli_1.0/snli_1.0_train.txt', '/home/jamesm/commonsense-part-whole/data/multinli_0.9/multinli_0.9_train.txt']
+    dsets = ['../../data/snli_1.0/snli_1.0_train.txt', '../../data/multinli_0.9/multinli_0.9_train.txt']
     pool = Pool(2)
     tot_sentences = 0
     start = time.time()
