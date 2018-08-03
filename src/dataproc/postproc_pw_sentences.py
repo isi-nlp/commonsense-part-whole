@@ -1,3 +1,6 @@
+"""
+    Post-process tgrep'd sentences to select those that have our nouns in them
+"""
 import argparse
 from collections import defaultdict
 import json

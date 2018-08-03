@@ -1,4 +1,6 @@
-# coding: utf-8
+"""
+    Put together retrieved part-whole sentences from multiple sources
+"""
 from collections import defaultdict
 import json
 import os

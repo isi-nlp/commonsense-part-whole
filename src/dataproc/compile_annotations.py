@@ -1,6 +1,8 @@
 """
-    Read a file of AMT output (all_just_results.csv), take the median response as ground truth
-    Split into train/dev/test with given split
+    Read a file of AMT output (i.e., all_just_results.csv)
+    Throw a result out if there's a nonsense annotation
+    Take the median response as ground truth
+    Split into train/dev/test with given split percentages
 """
 import argparse, csv, random
 import numpy as np
@@ -9,7 +11,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to AMT data')
     parser.add_argument('outfile', type=str, help='path to write annotated data. base name: will append _train, _dev, _test')
-    parser.add_argument('split', type=str, help='train/test/dev split, given slash delimited like 70/10/20')
+    parser.add_argument('split', type=str, help='train/test/dev split, given as slash delimited percentages like 70/10/20')
     parser.add_argument('--pjj-equals-impossible', const=True, action='store_const', help='flag to let pjj-nonsense be equal to impossible')
     args = parser.parse_args()
 

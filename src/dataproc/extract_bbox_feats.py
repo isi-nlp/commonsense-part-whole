@@ -1,3 +1,6 @@
+"""
+    Pull out bbox features (avg width, height, overlap) for parts, wholes, and part-wholes from visual genome
+"""
 import csv, re, json
 from collections import defaultdict
 
@@ -44,19 +47,6 @@ whole2widths = defaultdict(list)
 whole2heights = defaultdict(list)
 pw2overlap = defaultdict(list)
 
-partfeats = {part: {'avg_w': np.mean(part2widths[part]), 'avg_h': np.mean(part2heights[part])} for part in parts}
-wholefeats = {whole: {'avg_w': np.mean(whole2widths[whole]), 'avg_h': np.mean(whole2heights[whole])} for whole in wholes}
-pwfeats = {','.join(pw): np.mean(pw2overlap[pw]) for pw in pws}
-
-with open('../../data/annotated/part_feats.json', 'w') as of:
-    json.dump(partfeats, of)
-    
-with open('../../data/annotated/whole_feats.json', 'w') as of:
-    json.dump(wholefeats, of)
-    
-with open('../../data/annotated/pw_feats.json', 'w') as of:
-    json.dump(pwfeats, of)
-    
 for img in tqdm(rels):
     for rel in img['relationships']:
         pred = rel['predicate']
@@ -80,3 +70,17 @@ for img in tqdm(rels):
                 whole2heights[whole].append(wholej['h']/id2dims[img['image_id']][0])
                 
                 pw2overlap[(whole, part)].append(iou((partj['x'], partj['y'], partj['w'], partj['h']), (wholej['x'], wholej['y'], wholej['w'], wholej['h'])))
+
+partfeats = {part: {'avg_w': np.mean(part2widths[part]), 'avg_h': np.mean(part2heights[part])} for part in parts}
+wholefeats = {whole: {'avg_w': np.mean(whole2widths[whole]), 'avg_h': np.mean(whole2heights[whole])} for whole in wholes}
+pwfeats = {','.join(pw): np.mean(pw2overlap[pw]) for pw in pws}
+
+with open('../../data/annotated/part_feats.json', 'w') as of:
+    json.dump(partfeats, of)
+    
+with open('../../data/annotated/whole_feats.json', 'w') as of:
+    json.dump(wholefeats, of)
+    
+with open('../../data/annotated/pw_feats.json', 'w') as of:
+    json.dump(pwfeats, of)
+    

@@ -1,5 +1,5 @@
 """
-    Write the set of all nouns included in 'has' relations in the Visual Genome dataset
+    Write the set of all nouns included in 'has' relations in the Visual Genome dataset, along with some image metadata
 """
 from collections import Counter, defaultdict, namedtuple
 import csv

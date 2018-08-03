@@ -1,3 +1,7 @@
+"""
+    Plot chart of label distribution
+    Hopefully this bar is more interpretable than a pie graph
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns

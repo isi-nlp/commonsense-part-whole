@@ -1,6 +1,6 @@
 """
     Given gigaword, gutenberg, snli input, combine results of all.
-    Select (1? 2-3?) sentences per whole-adj, combine with retrieved or manufactured part-adj hypotheses.
+    Select up to 5 sentences per triple, combine with retrieved or manufactured part-adj hypotheses.
 """
 import csv
 import json
@@ -156,32 +156,17 @@ if __name__ == "__main__":
 
     trip2sentpairs = defaultdict(list)
     print(f"num wjs: {len(wjjs)}")
-    #num_pairs = 0
     pool = Pool(processes=int(sys.argv[1]))
     for num_wjjs,dct in enumerate(pool.imap_unordered(get_lines, wjjs.items())):
-        #num_pairs_batch = 0
         if type(dct) is list:
             continue
-            #import pdb; pdb.set_trace()
         for trip, sentpairs in dct.items():
             trip2sentpairs[trip].extend(sentpairs)
-            #num_pairs += len(sentpairs)
-            #num_pairs_batch += len(sentpairs)
-        #if num_pairs // 100 != (num_pairs - num_pairs_batch) // 100:
         if num_wjjs % 100 == 0:
             print(num_wjjs)
             #save in case we get interrupted
-        #if num_pairs // 10000 != (num_pairs - num_pairs_batch) // 10000:
             with open('../../data/candidates/trip2sentpairs.json', 'w') as of:
                 json.dump(trip2sentpairs, of)
 
     with open('../../data/candidates/trip2sentpairs.json', 'w') as of:
         json.dump(trip2sentpairs, of)
-    #with open('../../data/candidates/snli-style.csv', 'w') as of:
-    #    w = csv.writer(of, delimiter='\t')
-    #    header = ['whole', 'part', 'adj', 'hypothesis', 'context']
-    #    #header.extend(['context{}'.format(i+1) for i in range(10)])
-    #    w.writerow(header)
-    #    for line in to_write:
-    #        w.writerow(line)
-        

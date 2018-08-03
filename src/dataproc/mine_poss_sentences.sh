@@ -1,4 +1,6 @@
 #!/bin/bash
+### Use tgrep to search for *sentences* following possessive patterns in tgrep corpora files
+### Will use N of your cores
 N=20
 for fn in /auto/nlg-05/jgm_234/commonsense-part-whole/data/gigaword5-treebank/*.t2c; do
     ((i=i%N)); ((i++==0)) && wait

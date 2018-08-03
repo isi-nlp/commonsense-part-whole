@@ -1,4 +1,6 @@
 #!/bin/bash
+### Use tgrep to search for *noun pairs* following "of [det]" patterns in tgrep corpora files
+### Will use N of your cores
 N=20
 for fn in *.t2c; do 
     ((i=i%N)); ((i++==0)) && wait

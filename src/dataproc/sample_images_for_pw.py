@@ -1,5 +1,5 @@
 """
-    Retrieve 3 random image ids for a sample of part-whole relations
+    Retrieve 3 random image ids for a sample of part-whole relations, to be uploaded to S3 for mturk HIT
 """
 import csv, json, random
 from collections import defaultdict

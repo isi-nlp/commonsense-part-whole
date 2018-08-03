@@ -1,3 +1,6 @@
+"""
+    Utility to download and display the image for a given image id, without saving
+"""
 import sys
 import requests
 from PIL import Image as PIL_Image                                 

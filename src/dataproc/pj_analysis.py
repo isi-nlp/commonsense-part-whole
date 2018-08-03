@@ -1,3 +1,6 @@
+"""
+    Check out variety of wholes that share a part-adjective
+"""
 import pandas as pd
 
 df = pd.read_csv('../../data/annotated/full_all.csv')
