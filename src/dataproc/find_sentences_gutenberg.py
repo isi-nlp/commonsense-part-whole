@@ -27,7 +27,10 @@ def process_book(fname):
         #header
         next(r)
         for row in r:
-            noun_jjs[(row[0], row[2])] = set()
+            if args.noun == 'part':
+                noun_jjs[(row[1], row[2])] = set()
+            else:
+                noun_jjs[(row[0], row[2])] = set()
 
     book = open('%s/%s' % (BASE_DIR, fname)).read().replace('\n', ' ')
     #get rid of multiple whitespace
@@ -65,9 +68,9 @@ if __name__ == "__main__":
     parser.add_argument("noun", choices=['part', 'whole'], help="look for whole-jj or part-jj?")
     args = parser.parse_args()
 
-    BASE_DIR = '/home/jamesm/e/robot/'
+    BASE_DIR = '../../data/robot/'
     name = 'wj' if args.noun == 'whole' else 'pj'
-    filename = f'../../data/candidates/{name}-gutenberg-sentences.json'
+    filename = f'../../data/candidates/{name}-gutenberg-sentences2.json'
 
     noun_jjs = {}
     with open(args.file) as f:
@@ -80,7 +83,7 @@ if __name__ == "__main__":
             else:
                 noun_jjs[(row[0], row[2])] = set()
 
-    books = [fname for fname in os.listdir(BASE_DIR) if fname.endswith('.txt')]
+    books = [fname for fname in os.listdir(BASE_DIR) if fname.endswith('.txt')][61600:]
     pool = Pool(processes=args.cpu_count)
     tot_sentences = 0
     start = time.time()
