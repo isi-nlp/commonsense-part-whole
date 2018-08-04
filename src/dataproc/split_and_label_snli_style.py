@@ -27,11 +27,11 @@ if __name__ == '__main__':
     tef = open(args.outfile.replace('.csv', '_test.csv'), 'w')
 
     trw = csv.writer(trf, delimiter='\t')
-    trw.writerow(['whole', 'part', 'jj', 'hypothesis', 'context', 'label', 'bin_label'])
+    trw.writerow(['whole', 'part', 'jj', 'hypothesis', 'hsrc', 'context', 'csrc', 'label', 'bin_label'])
     dvw = csv.writer(dvf, delimiter='\t')
-    dvw.writerow(['whole', 'part', 'jj', 'hypothesis', 'context', 'label', 'bin_label'])
+    dvw.writerow(['whole', 'part', 'jj', 'hypothesis', 'hsrc', 'context', 'csrc', 'label', 'bin_label'])
     tew = csv.writer(tef, delimiter='\t')
-    tew.writerow(['whole', 'part', 'jj', 'hypothesis', 'context', 'label', 'bin_label'])
+    tew.writerow(['whole', 'part', 'jj', 'hypothesis', 'hsrc', 'context', 'csrc', 'label', 'bin_label'])
     
     with open(args.file) as f:
         trip2sentpairs = json.load(f)
@@ -39,24 +39,24 @@ if __name__ == '__main__':
             whole, part, jj = trip
             joined = ','.join(trip)
             if joined in trip2sentpairs:
-                for premise, hypothesis in trip2sentpairs[joined]:
+                for sent1, sent2 in trip2sentpairs[joined]:
                     if split == 'train':
-                        trw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                        trw.writerow([whole, part, jj, sent1[0], sent1[1], sent2[0], sent2[1], label, bin_label])
                     if split == 'dev':
-                        dvw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                        dvw.writerow([whole, part, jj, sent1[0], sent1[1], sent2[0], sent2[1], label, bin_label])
                     if split == 'test':
-                        tew.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                        tew.writerow([whole, part, jj, sent1[0], sent1[1], sent2[0], sent2[1], label, bin_label])
             else:
                 #I think these are WJ's missing because we didn't find sentences for them?
                 det = 'an' if jj[0] in ['a', 'e', 'i', 'o', 'u'] else 'a'
-                context = f"There is {det} {jj} {whole}."
-                hyp = f"The {whole}'s {part} is {jj}."
+                sent1 = f"There is {det} {jj} {whole}."
+                sent2 = f"The {whole}'s {part} is {jj}."
                 if split == 'train':
-                    trw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                    trw.writerow([whole, part, jj, sent1, 'syn', sent2, 'syn', label, bin_label])
                 if split == 'dev':
-                    dvw.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                    dvw.writerow([whole, part, jj, sent1, 'syn', sent2, 'syn', label, bin_label])
                 if split == 'test':
-                    tew.writerow([whole, part, jj, premise, hypothesis, label, bin_label])
+                    tew.writerow([whole, part, jj, sent1, 'syn', sent2, 'syn', label, bin_label])
 
                 
         #for trip, sentpairs in trip2sentpairs.items():

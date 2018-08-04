@@ -45,14 +45,12 @@ if __name__ == "__main__":
         with open(args.file.replace('train', fold)) as f:
             with open(args.file.replace("train.csv", "%s_feats.jsonl" % fold), 'w') as of:
                 r = csv.reader(f, delimiter='\t')
-                #w = csv.writer(of, delimiter='\t')
                 header = next(r)
-                #header.extend(['context_pos', 'hypothesis_pos', 'context_match_hyp', 'hyp_match_context'])
-                #w.writerow(header)
                 for row in tqdm(r):
-                    obj = {'whole': row[0], 'part': row[1], 'jj': row[2], 'sentence1': row[4], 'sentence2': row[3], 'label': row[5], 'bin_label': row[6]}
+                    obj = {'whole': row[0], 'part': row[1], 'jj': row[2], 'sentence1': row[5], 'sentence2': row[3], 'label': row[7], 'bin_label': row[8]}
 
-                    context_raw, hyp_raw = row[4], row[3]
+                    context_raw, hyp_raw = row[5], row[3]
+                    csrc, hsrc = row[6], row[4]
                     context = nlp(context_raw)
                     hyp = nlp(hyp_raw)
                     context_pos = ' '.join([tok.tag_ for tok in context])
@@ -61,7 +59,6 @@ if __name__ == "__main__":
                     c_h = set()
                     h_c = set()
                     for i, cword in enumerate(context):
-                        #import pdb; pdb.set_trace()
                         for j, hword in enumerate(hyp):
                             if is_exact_match(cword.text, hword.text):
                                 c_h.add(i)
@@ -75,8 +72,8 @@ if __name__ == "__main__":
                     obj['sentence2_binary_parse'] = ' '.join([tok.text for tok in hyp])
                     obj['sentence1_token_exact_match_with_s2'] = c_h
                     obj['sentence2_token_exact_match_with_s1'] = h_c
+                    obj['source1'] = csrc
+                    obj['source2'] = hsrc
 
                     of.write(json.dumps(obj) + '\n')
-
-                    #w.writerow([*row, context_pos, hyp_pos, ' '.join([str(n) for n in c_h]), ' '.join([str(n) for n in h_c])])
 
