@@ -36,6 +36,11 @@ if __name__ == "__main__":
                 #add Nones for any missing
                 for j in range(i+1, args.num_assignments):
                     response_arrs[j].append(None)
+
+
+    pair2k = {}
+    pair2shared = {}
+
     ks = []
     rs = []
     for (i, j) in itertools.combinations(range(args.num_assignments), 2):

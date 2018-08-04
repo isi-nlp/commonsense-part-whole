@@ -78,7 +78,7 @@ def make_hit(whole, part, jjs, full, form_str, w, title, dryrun):
                                      }
                                    ]
         )
-        w.writerow(["https://worker.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
+        w.writerow([title, "https://worker.mturk.com/mturk/preview?groupId=" + new_hit['HIT']['HITGroupId'], new_hit['HIT']['HITId'], whole, part, ';'.join(jjs)])
     else:
         with open("page_%s_%s.html" % (whole, part), 'w') as of:
             of.write(form_str)
@@ -109,6 +109,8 @@ if __name__ == "__main__":
                          endpoint_url = MTURK_URL
                          )
     #########################################
+
+    pws_done = set([tuple(row) for row in csv.reader(open('/home/jamesm/commonsense-part-whole/mturk/nonvis_pws_done.csv'))])
 
     print("reading examples")
     examples = [row for row in csv.reader(open('/home/jamesm/commonsense-part-whole/data/candidates/%s' % (args.candidate_file)))]
@@ -143,6 +145,9 @@ if __name__ == "__main__":
             
             whole = whole.replace('_', ' ')
             part = part.replace('_', ' ')
+            #skip pws we already have annotated
+            if (whole, part) in pws_done:
+                continue
             prompt, full, soup, form = reload_template(whole, part)
 
             num_in_hit = 0

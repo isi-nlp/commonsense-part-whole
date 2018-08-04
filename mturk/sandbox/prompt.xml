@@ -1,5 +1,6 @@
 <HTMLQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd">
     <HTMLContent><![CDATA[
+
 <!DOCTYPE html>                                                       
     <html>
         <head>
@@ -49,7 +50,7 @@
                     <div class="instructions">
                         <p>The purpose of this task is to answer common-sense questions about nouns and adjectives. </p>
                         <p>You will read a short sentence and answer followup questions. If you can imagine an interpretation in which a question makes sense, use that interpretation. If you aren't sure, just make your best guess.</p>
-                        <p>Please check the appropriate box if you believe that <span class='part'>noun_2</span> is not part of <span class='whole'>noun_1</span>. Use your intuition, but also please check the box in these cases:
+                        <p>Please check the appropriate boxes if you believe that <span class='part'>noun_2</span> is not part of <span class='whole'>noun_1</span>. Use your intuition, but also please check the boxes in these cases:
                         <ul>
                             <li>The words are too general, for example <span class='whole'>formation</span> and <span class='part'>member</span> 
                             <li>The words refer to places or other proper nouns, for example <span class='whole'>usa</span> and <span class='part'>florida</span> 
@@ -67,7 +68,7 @@
                     <button type='button' class="collapsible">Collapse instructions</button>
                 </div>
                 <div>
-                    <h4>Consider a typical <span class='whole'>WHOLE</span>. The <span class='whole'>WHOLE</span> has a <span class='part'>PART</span>.</h4>
+                    <h4>Consider a typical <span class='whole'>WHOLE</span>. The <span class='whole'>WHOLE</span> has <span class='det'>a</span> <span class='part'>PART</span>.</h4>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -82,6 +83,8 @@
                     <input type="checkbox" name="word-nonsense1" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense1" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense1" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl1" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -96,6 +99,8 @@
                     <input type="checkbox" name="word-nonsense2" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense2" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense2" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl2" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -110,6 +115,8 @@
                     <input type="checkbox" name="word-nonsense3" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense3" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense3" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl3" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -124,6 +131,8 @@
                     <input type="checkbox" name="word-nonsense4" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense4" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense4" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl4" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -138,6 +147,8 @@
                     <input type="checkbox" name="word-nonsense5" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense5" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense5" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl5" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -152,6 +163,8 @@
                     <input type="checkbox" name="word-nonsense6" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense6" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense6" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl6" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -166,6 +179,8 @@
                     <input type="checkbox" name="word-nonsense7" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense7" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense7" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl7" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -180,6 +195,8 @@
                     <input type="checkbox" name="word-nonsense8" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense8" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense8" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl8" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -194,6 +211,8 @@
                     <input type="checkbox" name="word-nonsense9" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense9" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense9" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl9" required></input></p>
                 </div>
                 <div class="question">
                     <p>Now assume the <span class='whole'>WHOLE</span> is <span class='jj'>ADJECTIVE</span>. Which of the following is true?</p>
@@ -208,6 +227,8 @@
                     <input type="checkbox" name="word-nonsense10" value="word-nonsense"/><label>I don't know what one of these words means</label><br />
                     <input type="checkbox" name="pjj-nonsense10" value="pjj-nonsense"/><label>I don't know what it means for a <span class="part">PART</span> to be <span class="jj">ADJECTIVE</span></label>
                     <input type="checkbox" name="pw-nonsense10" value="pw-nonsense"/><label>I don't think it is valid for a <span class="whole">WHOLE</span> to have a <span class="part">PART</span></label><br />
+                    <p lang="en-US" style="color: rgb(34, 34, 34)">Please briefly explain why you chose your answer.</p>
+                    <p><input type="text" size=80 name="expl10" required></input></p>
                 </div>
                 <p lang="en-US" style="color: rgb(34, 34, 34)"><b>(Optional)</b> Please provide any comments that you have about this HIT. Thanks for doing our HIT! We appreciate your input!</p>
 
@@ -243,6 +264,7 @@
             </script>
         </body>
     </html>
+
 
 
 

@@ -14,6 +14,8 @@ def update_responses(responses, q_id, free_text):
     if q_id.startswith('response'):
         if responses[ix] is None:
             responses[ix] = free_text
+    elif q_id.startswith('expl'):
+        responses[ix] = (responses[ix], free_text)
     elif 'nonsense' in q_id:
         responses[ix] = free_text
     return responses, None
@@ -47,7 +49,7 @@ if __name__ == "__main__":
                 r = csv.reader(f)
                 header = next(r)
                 for i in range(args.num_assignments):
-                    header.extend(['result%d' % (i+1), 'worker%d' % (i+1)])
+                    header.extend(['result%d' % (i+1), 'explanation%d' % (i+1), 'worker%d' % (i+1)])
                 w.writerow(header)
                 hit_ids = set()
                 num_results = []
@@ -63,6 +65,7 @@ if __name__ == "__main__":
                         print("retrieved %d results..." % len(num_results))
 
                     responses = defaultdict(list)
+                    explanations = defaultdict(list)
                     worker_ids = defaultdict(list)
                     comments = defaultdict(list)
                     if worker_results['NumResults'] > 0:
@@ -84,8 +87,9 @@ if __name__ == "__main__":
                                 assgn_responses, comment = update_responses(assgn_responses, answer_field['QuestionIdentifier'], answer_field['FreeText'])
                                 if comment is not None and comment != '':
                                     comments[pw].append((worker_id, comment))
-                            for jj, res in zip(jjs, assgn_responses):
+                            for jj, (res, expl) in zip(jjs, assgn_responses):
                                 responses[jj].append(res)
+                                explanations[jj].append(expl)
                                 worker_ids[jj].append(worker_id)
                     else:
                         continue
@@ -93,8 +97,9 @@ if __name__ == "__main__":
                     for jj, res in zip(jjs, responses):
                         to_write = row[:5]
                         to_write.append(jj)
-                        for res, worker_id in zip(responses[jj], worker_ids[jj]):
+                        for res, expl, worker_id in zip(responses[jj], explanations[jj], worker_ids[jj]):
                             to_write.append(res)
+                            to_write.append(expl)
                             to_write.append(worker_id)
                         w.writerow(to_write)
                     print()

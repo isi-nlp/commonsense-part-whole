@@ -118,10 +118,11 @@ class TripleMLP(nn.Module):
                 h5 = h5py.File(embed_file, 'r')
                 self.word2vec = {word:vec.value[0] for word,vec in h5.items()}
                 self.embed_size = 1024
-            elif embed_type == 'glove':
+            elif embed_type == 'glove' or embed_type == 'conceptnet':
                 with open(embed_file, 'r') as f:
                     self.word2vec = json.load(f)
                 self.embed_size = 300
+                self.word2vec['UNK'] = np.random.uniform(-0.02, 0.02, self.embed_size)
             elif embed_type == 'elmo_context':
                 self.trip2vec = {}
                 with open(embed_file) as f:
@@ -207,7 +208,10 @@ class TripleMLP(nn.Module):
                     embeds = []
                     for comp in triple:
                         for c in comp.split():
-                            embeds.append(torch.Tensor(self.word2vec[c]).squeeze().to(self.device))
+                            if c in self.word2vec:
+                                embeds.append(torch.Tensor(self.word2vec[c]).squeeze().to(self.device))
+                            else:
+                                embeds.append(torch.Tensor(self.word2vec['UNK']).squeeze().to(self.device))
 
                 #combine multi word wholes or parts
                 if ' ' in triple[0] or ' ' in triple[1]:
@@ -365,7 +369,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to train file')
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
-    parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
+    parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'conceptnet', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
     parser.add_argument('--comb', choices=['concat', 'add', 'mult'], default='concat', help='how to combine embeddings (default: concat)')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
