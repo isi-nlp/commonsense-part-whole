@@ -44,25 +44,44 @@ def get_idxs(obj):
             idx1 = prem_tokenized.index(whole1)
         except:
             prem_tokenized = retokenize(prem_tokenized)
-            idx1 = prem_tokenized.index(whole1)
+            try:
+                idx1 = prem_tokenized.index(whole1)
+            except:
+                idx1 = -1
         try:
             idx2 = prem_tokenized.index(whole2)
         except:
             prem_tokenized = retokenize(prem_tokenized)
-            idx2 = prem_tokenized.index(whole2)
+            try:
+                idx2 = prem_tokenized.index(whole2)
+            except:
+                idx2 = -1
         whole_idx1 = (idx1, idx2)
         #hyp
         try:
             idx1 = hyp_tokenized.index(whole1)
         except:
-            hyp_tokenized = retokenize(hyp_tokenized)
-            idx1 = hyp_tokenized.index(whole1)
+            if whole_idx1 == -1:
+                hyp_tokenized = retokenize(hyp_tokenized)
+                try:
+                    idx1 = hyp_tokenized.index(whole1)
+                except:
+                    idx1 = -1
         try:
             idx2 = hyp_tokenized.index(whole2)
         except:
-            hyp_tokenized = retokenize(hyp_tokenized)
-            idx2 = hyp_tokenized.index(whole2)
+            if whole_idx1 == -1:
+                hyp_tokenized = retokenize(hyp_tokenized)
+                try:
+                    idx2 = hyp_tokenized.index(whole2)
+                except:
+                    idx2 = -1
         whole_idx2 = (idx1, idx2)
+        #ugh
+        if -1 in whole_idx1:
+            whole_idx1 = -1
+        if -1 in whole_idx2:
+            whole_idx2 = -1
 
     try:
         jj_idx1 = prem_tokenized.index(jj)
