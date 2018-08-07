@@ -158,7 +158,7 @@ if __name__ == "__main__":
         contexts_used = 0
         for jj in jjs:
             wjss = list(wjjs[(whole, jj)])
-            pwss = list(pwsents[(whole, part)])
+            pwss = [ss for ss in list(pwsents[(whole, part)]) if len(ss.split()) < 50 and len(sent.split()) > 5]
             pjss = list(pjjs[(part, jj)])
             shuffle(wjss)
             shuffle(pwss)

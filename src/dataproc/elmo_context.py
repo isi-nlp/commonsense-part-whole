@@ -14,6 +14,110 @@ from tqdm import tqdm
 def retokenize(toklist):
     return [token for retoked in [nltk.word_tokenize(tok) for tok in toklist] for token in retoked]
 
+def get_idxs(obj):
+    part, whole, jj = obj['part'], obj['whole'], obj['jj']
+    prem_tokenized = [tok.text.lower() for tok in nlp(obj['sentence1'])]
+    hyp_tokenized = [tok.text.lower() for tok in nlp(obj['sentence2'])]
+    whole_idx1, whole_idx2, part_idx1, part_idx2, jj_idx1, jj_idx2 = -1, -1, -1, -1, -1, -1
+    if len(whole.split()) == 1:
+        if whole == 't-shirt':
+            #spacy is dumb
+            if whole in obj['sentence1']:
+                prem_tokenized = [tok for tok in nltk.word_tokenize(obj['sentence1'])]
+                whole_idx1 = prem_tokenized.index(whole)
+            if whole in obj['sentence2']:
+                hyp_tokenized = [tok for tok in nltk.word_tokenize(obj['sentence2'])]
+                whole_idx2 = hyp_tokenized.index(whole)
+        else:
+            try:
+                whole_idx1 = prem_tokenized.index(whole)
+            except:
+                pass
+            try:
+                whole_idx2 = hyp_tokenized.index(whole)
+            except:
+                pass
+    else:
+        whole1, whole2 = whole.split()
+        #prem
+        try:
+            idx1 = prem_tokenized.index(whole1)
+        except:
+            prem_tokenized = retokenize(prem_tokenized)
+            idx1 = prem_tokenized.index(whole1)
+        try:
+            idx2 = prem_tokenized.index(whole2)
+        except:
+            prem_tokenized = retokenize(prem_tokenized)
+            idx2 = prem_tokenized.index(whole2)
+        whole_idx1 = (idx1, idx2)
+        #hyp
+        try:
+            idx1 = hyp_tokenized.index(whole1)
+        except:
+            hyp_tokenized = retokenize(hyp_tokenized)
+            idx1 = hyp_tokenized.index(whole1)
+        try:
+            idx2 = hyp_tokenized.index(whole2)
+        except:
+            hyp_tokenized = retokenize(hyp_tokenized)
+            idx2 = hyp_tokenized.index(whole2)
+        whole_idx2 = (idx1, idx2)
+
+    try:
+        jj_idx1 = prem_tokenized.index(jj)
+    except:
+        pass
+    try:
+        jj_idx2 = hyp_tokenized.index(jj)
+    except:
+        pass
+    try:
+        part_idx1 = prem_tokenized.index(part)
+    except:
+        pass
+    try:
+        part_idx2 = hyp_tokenized.index(part)
+    except:
+        pass
+    return whole, part, jj, prem_tokenized, hyp_tokenized, [whole_idx1, whole_idx2, part_idx1, part_idx2, jj_idx1, jj_idx2]
+
+def get_vecs(prem_embeds, hyp_embeds, idx, idxs1, idxs2):
+    if type(idxs1[0]) is tuple:
+        #combine multiword wholes
+        whole_vec1 = (prem_embeds[idx][idxs1[0][0]].data + prem_embeds[idx][idxs1[0][1]].data) / 2
+    elif idxs1[0] != -1:
+        whole_vec1 = prem_embeds[idx][idxs1[0]].data
+    if type(idxs2[0]) is tuple:
+        #combine multiword wholes
+        whole_vec2 = (hyp_embeds[idx][idxs2[0][0]].data + hyp_embeds[idx][idxs2[0][1]].data) / 2
+    elif idxs2[0] != -1:
+        whole_vec2 = hyp_embeds[idx][idxs2[0]].data
+    else:
+        whole_vec2 = whole_vec1
+    if idxs1[0] == -1:
+        whole_vec1 = whole_vec2
+    #PART
+    if idxs1[1] != -1:
+        part_vec1 = prem_embeds[idx][idxs1[1]].data
+    if idxs2[1] != -1:
+        part_vec2 = hyp_embeds[idx][idxs2[1]].data
+    else:
+        part_vec2 = part_vec1
+    if idxs1[1] == -1:
+        part_vec1 = part_vec2
+    #JJ
+    if idxs1[2] != -1:
+        jj_vec1 = prem_embeds[idx][idxs1[2]].data
+    if idxs2[2] != -1:
+        jj_vec2 = hyp_embeds[idx][idxs2[2]].data
+    else:
+        jj_vec2 = jj_vec1
+    if idxs1[2] == -1:
+        jj_vec1 = jj_vec2
+    return whole_vec1, whole_vec2, part_vec1, part_vec2, jj_vec1, jj_vec2
+
+
 options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
 weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
 
@@ -28,7 +132,8 @@ batch_size = 32
 with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
     w = csv.writer(of)
     w.writerow(['whole', 'part', 'jj', 'vec'])
-    with open('../../data/annotated/snli_style_feats.jsonl') as f:
+    #with open('../../data/annotated/snli_style_feats.jsonl') as f:
+    with open('../../data/annotated/retrieved_feats.jsonl') as f:
         prem_batch = []
         prem_batch_idxs = [] #tuples
         hyp_batch = []
@@ -38,36 +143,14 @@ with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
         jbatch = []
         for idx,line in tqdm(enumerate(f)):
             obj = json.loads(line.strip())
-            part, whole, jj = obj['part'], obj['whole'], obj['jj']
-            prem_tokenized = [tok.text.lower() for tok in nlp(obj['sentence1'])]
-            if len(whole.split()) == 1:
-                try:
-                    whole_idx = prem_tokenized.index(whole)
-                except:
-                    #this happens for 't-shirt', but only in spacy's tokenizer (which, why am I using theirs again...)
-                    prem_tokenized = [tok for tok in nltk.word_tokenize(obj['sentence1'])]
-                    whole_idx = prem_tokenized.index(whole)
-            else:
-                whole1, whole2 = whole.split()
-                try:
-                    idx1 = prem_tokenized.index(whole1)
-                except:
-                    prem_tokenized = retokenize(prem_tokenized)
-                    idx1 = prem_tokenized.index(whole1)
-                try:
-                    idx2 = prem_tokenized.index(whole2)
-                except:
-                    prem_tokenized = retokenize(prem_tokenized)
-                    idx2 = prem_tokenized.index(whole2)
-                whole_idx = (idx1, idx2)
-            jj_idx = prem_tokenized.index(jj)
+            whole, part, jj, prem_tokenized, hyp_tokenized, idxs = get_idxs(obj)
+            whole_idx1, whole_idx2, part_idx1, part_idx2, jj_idx1, jj_idx2 = idxs
+            
             prem_batch.append(prem_tokenized)
-            prem_batch_idxs.append((whole_idx, jj_idx))
+            prem_batch_idxs.append((whole_idx1, part_idx1, jj_idx1))
 
-            hyp_tokenized = [tok.text.lower() for tok in nlp(obj['sentence2'])]
-            part_idx = hyp_tokenized.index(part)
             hyp_batch.append(hyp_tokenized)
-            hyp_batch_idxs.append(part_idx)
+            hyp_batch_idxs.append((whole_idx2, part_idx2, jj_idx2))
 
             wbatch.append(whole)
             pbatch.append(part)
@@ -81,13 +164,15 @@ with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
                 hyp_char_ids = batch_to_ids(hyp_batch)
                 hyp_embeds = elmo(hyp_char_ids)
                 hyp_embeds = hyp_embeds['elmo_representations'][0]
-                for idx,((iw, ij), ip) in enumerate(zip(prem_batch_idxs, hyp_batch_idxs)):
-                    if type(iw) is tuple:
-                        #combine multiword wholes
-                        whole_vec = (prem_embeds[idx][iw[0]].data + prem_embeds[idx][iw[1]].data) / 2
-                    else:
-                        whole_vec = prem_embeds[idx][iw].data
-                    vec = np.concatenate([whole_vec , hyp_embeds[idx][ip].data, prem_embeds[idx][ij].data])
+                for idx,(idxs1, idxs2) in enumerate(zip(prem_batch_idxs, hyp_batch_idxs)):
+                    #WHOLE
+                    whole_vec1, whole_vec2, part_vec1, part_vec2, jj_vec1, jj_vec2 = get_vecs(prem_embeds, hyp_embeds, idx, idxs1, idxs2)
+                    
+                    whole_vec = (whole_vec1 + whole_vec2) / 2
+                    part_vec = (part_vec1 + part_vec2) / 2
+                    jj_vec = (jj_vec1 + jj_vec2) / 2
+
+                    vec = np.concatenate([whole_vec, part_vec, jj_vec])
                     w.writerow([wbatch[idx], pbatch[idx], jbatch[idx]] + vec.tolist())
 
                 #reset
