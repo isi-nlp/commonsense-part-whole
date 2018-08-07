@@ -148,7 +148,7 @@ print("done")
 nlp = spacy.load('en', disable=['tagger', 'parser', 'ner', 'textcat'])
 
 batch_size = 32
-with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
+with open('../../data/annotated/elmo_retr_contextualized.data', 'w') as of:
     w = csv.writer(of)
     w.writerow(['whole', 'part', 'jj', 'vec'])
     #with open('../../data/annotated/snli_style_feats.jsonl') as f:
@@ -160,9 +160,12 @@ with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
         wbatch = []
         pbatch = []
         jbatch = []
-        for idx,line in tqdm(enumerate(f)):
+        for ix,line in tqdm(enumerate(f)):
             obj = json.loads(line.strip())
             whole, part, jj, prem_tokenized, hyp_tokenized, idxs = get_idxs(obj)
+            if prem_tokenized == hyp_tokenized:
+                #bug in "replace whole with part" code :\
+                continue
             whole_idx1, whole_idx2, part_idx1, part_idx2, jj_idx1, jj_idx2 = idxs
             
             prem_batch.append(prem_tokenized)
@@ -184,7 +187,6 @@ with open('../../data/annotated/elmo_snli_contextualized3.data', 'w') as of:
                 hyp_embeds = elmo(hyp_char_ids)
                 hyp_embeds = hyp_embeds['elmo_representations'][0]
                 for idx,(idxs1, idxs2) in enumerate(zip(prem_batch_idxs, hyp_batch_idxs)):
-                    #WHOLE
                     whole_vec1, whole_vec2, part_vec1, part_vec2, jj_vec1, jj_vec2 = get_vecs(prem_embeds, hyp_embeds, idx, idxs1, idxs2)
                     
                     whole_vec = (whole_vec1 + whole_vec2) / 2
