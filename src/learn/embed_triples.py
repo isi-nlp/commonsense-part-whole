@@ -1,23 +1,29 @@
 """
     Starting with elmo embeddings for a (whole, part, jj) triple, combine them with an MLP and predict
 """
-import argparse, csv, itertools, json, math, os, sys, time
+import argparse
+import csv
+import itertools
+import json
+import math
+import os
+import sys
+import time
 from collections import defaultdict
 
 import h5py
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from scipy.stats import spearmanr
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, mean_squared_error
-from sklearn.feature_extraction.text import CountVectorizer
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+from scipy.stats import spearmanr
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             mean_squared_error, precision_score, recall_score)
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 EXP_DIR = '../../experiments'
@@ -86,9 +92,40 @@ class TripleBboxDataset(TripleDataset):
                       self.pw_feats[','.join(triple[:2])]]
         return triple, label, bbox_feats
 
+
 class TripleMLP(nn.Module):
     def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         super(TripleMLP, self).__init__()
+        self._embed_init(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+
+        #first hidden layer
+        if self.num_layers > 0:
+            if self.comb == 'concat':
+                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+            else:
+                seq = [nn.Linear(self.embed_size, self.hidden_size)]
+            seq = self._add_nonlinearity(seq)
+            seq.append(nn.Dropout(p=self.dropout))
+
+            #more hidden layers
+            for _ in range(self.num_layers-1):
+                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+                seq = self._add_nonlinearity(seq)
+                seq.append(nn.Dropout(p=self.dropout))
+        else:
+            seq = []
+
+        #output
+        if self.loss_fn == 'cross_entropy':
+            out_dim = 2 if self.binary else 5
+        elif self.loss_fn in ['mse', 'smooth_l1']:
+            out_dim = 1
+        self.MLP = nn.Sequential(*seq)
+        bbox_dim = 5 if self.bbox else 0
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        self.final = nn.Linear(final_input, out_dim)
+
+    def _embed_init(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.nonlinearity = nonlinearity
@@ -141,33 +178,6 @@ class TripleMLP(nn.Module):
         if self.update_embed:
             self._load_pretrained()
 
-        #first hidden layer
-        if self.num_layers > 0:
-            if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
-            else:
-                seq = [nn.Linear(self.embed_size, self.hidden_size)]
-            seq = self._add_nonlinearity(seq)
-            seq.append(nn.Dropout(p=self.dropout))
-
-            #more hidden layers
-            for _ in range(self.num_layers-1):
-                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
-                seq = self._add_nonlinearity(seq)
-                seq.append(nn.Dropout(p=self.dropout))
-        else:
-            seq = []
-
-        #output
-        if self.loss_fn == 'cross_entropy':
-            out_dim = 2 if self.binary else 5
-        elif self.loss_fn in ['mse', 'smooth_l1']:
-            out_dim = 1
-        self.MLP = nn.Sequential(*seq)
-        bbox_dim = 5 if self.bbox else 0
-        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
-        self.final = nn.Linear(final_input, out_dim)
-
     def _add_nonlinearity(self, seq):
         if self.nonlinearity == 'tanh':
             seq.append(nn.Tanh())
@@ -193,6 +203,23 @@ class TripleMLP(nn.Module):
     def forward(self, triples, labels, bbox_fs=None):
         #embeddings
         inp = []
+        inp = self._get_embeddings(triples)
+        #the rest
+        inp = torch.stack(inp)
+        inp = F.dropout(inp, p=self.dropout)
+        logits = self.MLP(inp)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
+        if self.loss_fn == 'cross_entropy':
+            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
+        elif self.loss_fn == 'mse':
+            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        elif self.loss_fn == 'smooth_l1':
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        return pred, loss
+
+    def _get_embeddings(self, triples):
         for triple in triples:
             if self.trip_embeds:
                 inp.append(self.trip2vec[tuple(triple)])
@@ -233,23 +260,7 @@ class TripleMLP(nn.Module):
                     else:
                         embeds = embeds.view(-1)
                     inp.append(embeds)
-
-        #the rest
-        inp = torch.stack(inp)
-        #if self.bbox and bbox_fs is not None:
-        #    inp = torch.cat([inp, torch.Tensor(bbox_fs)], 1)
-        inp = F.dropout(inp, p=self.dropout)
-        logits = self.MLP(inp)
-        if self.bbox and bbox_fs is not None:
-            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
-        pred = self.final(logits)
-        if self.loss_fn == 'cross_entropy':
-            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
-        elif self.loss_fn == 'mse':
-            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
-        elif self.loss_fn == 'smooth_l1':
-            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
-        return pred, loss
+        return inp
 
     def _combine_embeds(self, triple, embeds):
         #just some hard coding...
@@ -268,6 +279,59 @@ class TripleMLP(nn.Module):
         else:
             comb_embeds = embeds
         return comb_embeds
+
+
+class PartWholeInteract(TripleMLP):
+    def __init__(self, hidden_size, num_layers, kernel_size, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        self._embed_init(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        self.conv = nn.Conv1d(self.embed_size, self.embed_size, kernel_size=kernel_size)
+        #first hidden layer
+        if self.num_layers > 0:
+            if self.comb == 'concat':
+                seq = [nn.Linear(self.embed_size*2, self.hidden_size)]
+            else:
+                seq = [nn.Linear(self.embed_size, self.hidden_size)]
+            seq = self._add_nonlinearity(seq)
+            seq.append(nn.Dropout(p=self.dropout))
+
+            #more hidden layers
+            for _ in range(self.num_layers-1):
+                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+                seq = self._add_nonlinearity(seq)
+                seq.append(nn.Dropout(p=self.dropout))
+        else:
+            seq = []
+        #output
+        if self.loss_fn == 'cross_entropy':
+            out_dim = 2 if self.binary else 5
+        elif self.loss_fn in ['mse', 'smooth_l1']:
+            out_dim = 1
+        self.MLP = nn.Sequential(*seq)
+        bbox_dim = 5 if self.bbox else 0
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        self.final = nn.Linear(final_input, out_dim)
+
+    def forward(self, triples, labels):
+        #embeddings
+        inp = []
+        embeds = self._get_embeddings(triples)
+        #part whole interaction
+        #batch outer product
+        inp = torch.bmm(embeds[0].unsqueeze(2), embeds[1].unsqueeze(1))
+        inp = self.conv(inp)
+        inp = F.max_pool1d(inp, kernel_size=cn.size(2)).squeeze()
+        inp = torch.cat([inp, embeds[2]], 1)
+        logits = self.MLP(inp)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
+        if self.loss_fn == 'cross_entropy':
+            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
+        elif self.loss_fn == 'mse':
+            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        elif self.loss_fn == 'smooth_l1':
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        return pred, loss
 
 
 #define a plotter object to make it simple to carry many window objects around
@@ -368,11 +432,13 @@ def update_metrics(metrics, golds, preds, losses, fold):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to train file')
+    parser.add_argument('--model', choices=['MLP', 'pwi'], default="MLP", help="which model to train (default: MLP)")
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
     parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'conceptnet', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
     parser.add_argument('--comb', choices=['concat', 'add', 'mult'], default='concat', help='how to combine embeddings (default: concat)')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
+    parser.add_argument('--kernel-size', dest='kernel_size', type=int, default=3, help='kernel size for conv over part-whole interaction')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size (default: 128)')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (default: 2; 0 = do LogReg)')
     parser.add_argument('--nonlinearity', choices=['relu', 'tanh', 'elu', 'gelu', 'selu'], default='relu', help='nonlinearity for MLP (default: relu)')
@@ -414,7 +480,10 @@ if __name__ == "__main__":
                     word2ix[word] = len(word2ix)
 
     torch.manual_seed(4746)
-    model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+    if args.model == 'MLP':
+        model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+    elif args.model == 'pwi':
+        model = PartWholeInteract(args.hidden_size, args.num_layers, args.kernel_size, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     print(model)
     if args.test_model:
         sd = torch.load(args.test_model)
@@ -540,10 +609,12 @@ if __name__ == "__main__":
         if early_stop(metrics_dv, args.criterion, args.patience):
             print("early stopping point hit")
             #reload best model
-            model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+            if args.model == 'MLP':
+                model = TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+            elif args.model == 'pwi':
+                model = PartWholeInteract(args.hidden_size, args.num_layers, args.kernel_size, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
             sd = torch.load('%s/model_best_%s.pth' % (exp_dir, args.criterion))
             model.load_state_dict(sd)
             model.to(device)
             #flag to rerun on dev
             dont_train = True
-
