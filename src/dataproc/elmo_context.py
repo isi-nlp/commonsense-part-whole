@@ -148,7 +148,7 @@ print("done")
 nlp = spacy.load('en', disable=['tagger', 'parser', 'ner', 'textcat'])
 
 batch_size = 32
-with open('../../data/annotated/elmo_retr_contextualized.data', 'w') as of:
+with open('../../data/annotated/elmo_retr_contextualized.data', 'a') as of:
     w = csv.writer(of)
     w.writerow(['whole', 'part', 'jj', 'vec'])
     #with open('../../data/annotated/snli_style_feats.jsonl') as f:
@@ -161,12 +161,19 @@ with open('../../data/annotated/elmo_retr_contextualized.data', 'w') as of:
         pbatch = []
         jbatch = []
         for ix,line in tqdm(enumerate(f)):
+            if ix < 18721:
+                continue
             obj = json.loads(line.strip())
             whole, part, jj, prem_tokenized, hyp_tokenized, idxs = get_idxs(obj)
             if prem_tokenized == hyp_tokenized:
                 #bug in "replace whole with part" code :\
                 continue
             whole_idx1, whole_idx2, part_idx1, part_idx2, jj_idx1, jj_idx2 = idxs
+            #deal with other issues
+            if (whole_idx1 == -1 and whole_idx2 == -1) or \
+               (part_idx1 == -1 and part_idx2 == -1) or \
+               (jj_idx1 == -1 and jj_idx2 == -1):
+                   continue
             
             prem_batch.append(prem_tokenized)
             prem_batch_idxs.append((whole_idx1, part_idx1, jj_idx1))
