@@ -36,7 +36,7 @@ class GELU(nn.Module):
         return gelu(input)
 
 class TripleDataset(Dataset):
-    def __init__(self, fname, binary, only_use):
+    def __init__(self, fname, binary, only_use, **kwargs):
         self.triples = pd.read_csv(fname)
         self.mode = 'train'
         self.binary = binary
@@ -67,6 +67,44 @@ class TripleDataset(Dataset):
         triple = self.triples.iloc[idx][self.words].tolist()
         lname = 'bin_label' if self.binary else 'label'
         return triple, self.triples.iloc[idx][lname]
+
+class TripleRetrDataset(Dataset):
+    def __init__(self, fname, binary, only_use, trip2embeds):
+        trip2label = {tuple(row[:3]):tuple(row[3:]) for row in csv.reader(open(fname))}
+        self.data = []
+        self.labels = []
+        self.trips = []
+        for trip,embeds in trip2embeds.items():
+            for embed in embeds: 
+                self.data.append(embed)
+                self.labels.append(trip2label[trip])
+                self.trips.append(trip)
+        self.mode = 'train'
+        self.binary = binary
+        self.word2ix = None
+        if only_use == 'pw':
+            self.words = ['whole', 'part']
+        elif only_use == 'wjj':
+            self.words = ['whole', 'jj']
+        elif only_use == 'pjj':
+            self.words = ['part', 'jj']
+        else:
+            self.words = ['whole', 'part', 'jj']
+
+        #make sklearn build the vocab for me
+        vectorizer = CountVectorizer(tokenizer=str.split)
+        #self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row['whole'], row['part'], row['jj']]), axis=1)
+        self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row[w] for w in self.words]), axis=1)
+        feats = vectorizer.fit_transform(self.triples['cat'])
+        self.word2ix = vectorizer.vocabulary_
+
+    def __len__(self):
+        return sum([len(v) for v in self.trip2embed.values()])
+
+    def __getitem__(self, idx):
+        l_ix = 1 if self.binary else 0
+        return self.trips[idx], self.labels[idx][l_ix], self.data[idx], 
+
 
 class TripleBboxDataset(TripleDataset):
     def __init__(self, fname, binary, only_use):
@@ -200,9 +238,13 @@ class TripleMLP(nn.Module):
         embeddings = np.concatenate([embeddings, np.random.uniform(-.2, .2, size=(1,self.embed_size))])
         self.embed.weight.data.copy_(torch.from_numpy(embeddings))
 
-    def forward(self, triples, labels, bbox_fs=None):
+    def forward(self, triples, labels, bbox_fs=None, embeds=None):
         #embeddings
-        inp = self._get_embeddings(triples)
+        if not embeds:
+            inp = self._get_embeddings(triples)
+        else:
+            import pdb; pdb.set_trace()
+            inp = torch.Tensor(embeds)
         #the rest
         logits = self.MLP(inp)
         if self.bbox and bbox_fs is not None:
@@ -464,13 +506,28 @@ if __name__ == "__main__":
         args.vis = Plotter(args)
     device = torch.device('cuda' if args.gpu else 'cpu')
 
-    dset = TripleBboxDataset if args.bbox_feats else TripleDataset
-    train_set = dset(args.file, args.binary, args.only_use)
-    dev_set = dset(args.file.replace('train', 'dev'), args.binary, args.only_use)
-    test_set = dset(args.file.replace('train', 'test'), args.binary, args.only_use)
+    trip2embeds = defaultdict(list)
+    if args.bbox_feats:
+        dset = TripleBboxDataset
+    elif embed_type == 'elmo_context' and 'retr' in args.embed_file:
+        print("loading elmo retrieved embeds")
+        with open(args.embed_file) as f:
+            r = csv.reader(f)
+            next(r)
+            for row in r:
+                trip2embeds[tuple(row[:3])] = np.array(row[4:])
+        dset = TripleRetrDataset
+    else:
+        dset = TripleDataset
+    train_set = dset(args.file, args.binary, args.only_use, trip2embeds=trip2embeds)
+    dev_set = dset(args.file.replace('train', 'dev'), args.binary, args.only_use, trip2embeds=trip2embeds)
+    test_set = dset(args.file.replace('train', 'test'), args.binary, args.only_use, trip2embeds=trip2embeds)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
     dev_loader = DataLoader(dev_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, collate_fn=tuple_collate)
+
+    #memory
+    del trip2embeds
 
     word2ix = train_set.word2ix
     if args.embed_file is not None:
@@ -507,9 +564,12 @@ if __name__ == "__main__":
             try:
                 for batch_ix, data in tqdm(enumerate(train_loader)):
                     optimizer.zero_grad()
-                    if args.bbox_feats:
+                    if isinstance(train_set, TripleBboxDataset):
                         triples, labels, bbox_fs = data
                         preds, loss = model(triples, labels, bbox_fs=bbox_fs)
+                    elif isinstance(train_set, TripleRetrDataset):
+                        triples, labels, embeds = data
+                        preds, loss = model(triples, labels, embeds=embeds)
                     else:
                         triples, labels = data
                         preds, loss = model(triples, labels)
