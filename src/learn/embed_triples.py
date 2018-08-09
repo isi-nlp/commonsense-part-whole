@@ -202,11 +202,8 @@ class TripleMLP(nn.Module):
 
     def forward(self, triples, labels, bbox_fs=None):
         #embeddings
-        inp = []
         inp = self._get_embeddings(triples)
         #the rest
-        inp = torch.stack(inp)
-        inp = F.dropout(inp, p=self.dropout)
         logits = self.MLP(inp)
         if self.bbox and bbox_fs is not None:
             logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
@@ -220,6 +217,7 @@ class TripleMLP(nn.Module):
         return pred, loss
 
     def _get_embeddings(self, triples):
+        inp = []
         for triple in triples:
             if self.trip_embeds:
                 inp.append(self.trip2vec[tuple(triple)])
@@ -260,6 +258,8 @@ class TripleMLP(nn.Module):
                     else:
                         embeds = embeds.view(-1)
                     inp.append(embeds)
+        inp = torch.stack(inp)
+        inp = F.dropout(inp, p=self.dropout)
         return inp
 
     def _combine_embeds(self, triple, embeds):
@@ -283,7 +283,7 @@ class TripleMLP(nn.Module):
 
 class PartWholeInteract(TripleMLP):
     def __init__(self, hidden_size, num_layers, kernel_size, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
-        self._embed_init(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        super(PartWholeInteract, self).__init__(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
         self.conv = nn.Conv1d(self.embed_size, self.embed_size, kernel_size=kernel_size)
         #first hidden layer
         if self.num_layers > 0:
@@ -317,9 +317,10 @@ class PartWholeInteract(TripleMLP):
         embeds = self._get_embeddings(triples)
         #part whole interaction
         #batch outer product
+        embeds = [embeds[:,:self.embed_size], embeds[:,self.embed_size:self.embed_size*2], embeds[:,self.embed_size*2:]]
         inp = torch.bmm(embeds[0].unsqueeze(2), embeds[1].unsqueeze(1))
         inp = self.conv(inp)
-        inp = F.max_pool1d(inp, kernel_size=cn.size(2)).squeeze()
+        inp = F.max_pool1d(inp, kernel_size=inp.size(2)).squeeze()
         inp = torch.cat([inp, embeds[2]], 1)
         logits = self.MLP(inp)
         if self.bbox and bbox_fs is not None:
@@ -438,7 +439,7 @@ if __name__ == "__main__":
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
     parser.add_argument('--comb', choices=['concat', 'add', 'mult'], default='concat', help='how to combine embeddings (default: concat)')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
-    parser.add_argument('--kernel-size', dest='kernel_size', type=int, default=3, help='kernel size for conv over part-whole interaction')
+    parser.add_argument('--kernel-size', dest='kernel_size', type=int, default=3, help='kernel size for conv over part-whole interaction (default: 3)')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size (default: 128)')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (default: 2; 0 = do LogReg)')
     parser.add_argument('--nonlinearity', choices=['relu', 'tanh', 'elu', 'gelu', 'selu'], default='relu', help='nonlinearity for MLP (default: relu)')
