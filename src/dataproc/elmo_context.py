@@ -161,7 +161,7 @@ with open('../../data/annotated/elmo_retr_contextualized.data', 'a') as of:
         pbatch = []
         jbatch = []
         for ix,line in tqdm(enumerate(f)):
-            if ix < 18721:
+            if ix < 57344:
                 continue
             obj = json.loads(line.strip())
             whole, part, jj, prem_tokenized, hyp_tokenized, idxs = get_idxs(obj)
@@ -194,7 +194,11 @@ with open('../../data/annotated/elmo_retr_contextualized.data', 'a') as of:
                 hyp_embeds = elmo(hyp_char_ids)
                 hyp_embeds = hyp_embeds['elmo_representations'][0]
                 for idx,(idxs1, idxs2) in enumerate(zip(prem_batch_idxs, hyp_batch_idxs)):
-                    whole_vec1, whole_vec2, part_vec1, part_vec2, jj_vec1, jj_vec2 = get_vecs(prem_embeds, hyp_embeds, idx, idxs1, idxs2)
+                    try:
+                        whole_vec1, whole_vec2, part_vec1, part_vec2, jj_vec1, jj_vec2 = get_vecs(prem_embeds, hyp_embeds, idx, idxs1, idxs2)
+                    except Exception as e:
+                        print(str(e))
+                        continue
                     
                     whole_vec = (whole_vec1 + whole_vec2) / 2
                     part_vec = (part_vec1 + part_vec2) / 2
