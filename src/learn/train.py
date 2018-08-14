@@ -177,7 +177,7 @@ if __name__ == "__main__":
                 else:
                     triples, labels = data
                     preds, loss = model(triples, labels)
-                dev_trips.extend(triples)
+                #dev_trips.extend(triples)
                 dev_golds.extend(labels)
                 if args.loss_fn == 'cross_entropy':
                     dev_preds.extend([pred.argmax().item() for pred in preds])
@@ -192,7 +192,7 @@ if __name__ == "__main__":
 
         if epoch == 0 and not dont_train:
             #make experiment directory
-            exp_dir = os.path.join(EXP_DIR, '_'.join(['embed', args.exec_time]))
+            exp_dir = os.path.join(EXP_DIR, '_'.join([args.model, args.exec_time]))
             print("output directory: %s" % exp_dir)
             os.mkdir(exp_dir)
         elif args.test_model:
