@@ -51,7 +51,8 @@ for i in range(2):
                           dtype=np.float32).reshape((item['num_boxes'],-1))
                 in_data[item['image_id']] = item
             except:
-                break
+                #bail
+                continue
 
 print("loading relationships")
 rels = json.load(open('../../data/visualgenome/relationships.json'))
@@ -113,8 +114,8 @@ for img in tqdm(rels):
                     pw2feats[(whole, part)].append({'featw': featw.tolist(), 'featp': featp.tolist(), 'iouw': max_iouw, 'ioup': max_ioup})
 
 print("writing out features")
-with open('../../data/candidates/pw_img_feats.jsonl', 'w') as of:
-    for (part, whole), insts in tqdm(pw2feats.items()):
+with open('../../data/candidates/pw_img_feats2.jsonl', 'w') as of:
+    for (whole, part), insts in tqdm(pw2feats.items()):
         for inst in insts:
             inst['whole'] = whole
             inst['part'] = part

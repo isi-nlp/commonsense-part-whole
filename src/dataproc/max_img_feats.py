@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 pw2max = defaultdict(int)
 pw2vecs = {}
-with open('../../data/candidates/pw_img_feats.jsonl') as of:
+with open('../../data/candidates/pw_img_feats2.jsonl') as of:
     for line in tqdm(of):
         obj = json.loads(line.strip())
         whole, part = obj['whole'], obj['part']

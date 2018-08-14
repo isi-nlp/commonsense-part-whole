@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from torch.utils.data import Dataset
@@ -31,6 +33,30 @@ class TripleDataset(Dataset):
         triple = self.triples.iloc[idx][self.words].tolist()
         lname = 'bin_label' if self.binary else 'label'
         return triple, self.triples.iloc[idx][lname]
+
+class TripleImageDataset(TripleDataset):
+    def __init__(self, fname, binary, only_use, **kwargs):
+        super(TripleImageDataset, self).__init__(fname, binary, only_use)
+        pws = set()
+        for row in self.triples.itertuples():
+            pws.add((row.whole, row.part))
+        #also load image feature lookups
+        self.pw2featw = {}
+        self.pw2featp = {}
+        #with open('../../data/candidates/pw_img_avg_feats.jsonl') as f:
+        with open('../../data/candidates/pw_max_iou_feats.jsonl') as f:
+            for line in f:
+                obj = json.loads(line.strip())
+                whole, part = obj['whole'], obj['part']
+                if (whole, part) in pws:
+                    self.pw2featw[(whole, part)] = obj['featw']
+                    self.pw2featp[(whole, part)] = obj['featp']
+
+    def __getitem__(self, idx):
+        triple = self.triples.iloc[idx][self.words].tolist()
+        pw = tuple(triple[:2])
+        lname = 'bin_label' if self.binary else 'label'
+        return triple, self.triples.iloc[idx][lname], self.pw2featw[pw], self.pw2featp[pw]
 
 class DefinitionDataset(Dataset):
     def __init__(self, fname, binary, only_use, **kwargs):
@@ -67,12 +93,18 @@ class DefinitionDataset(Dataset):
 
 class TripleRetrDataset(Dataset):
     def __init__(self, fname, binary, only_use, trip2embeds):
-        trip2label = {tuple(row[:3]):tuple(row[3:]) for row in csv.reader(open(fname))}
+        trip2label = {}
+        pws = set()
+        for row in csv.reader(open(fname)):
+            trip2label[tuple(row[:3])] = tuple(row[3:])
+            pws.add(tuple(row[:2]))
         self.data = []
         self.labels = []
         self.trips = []
         for trip,embeds in trip2embeds.items():
             if trip not in trip2label:
+                continue
+            if trip[:2] not in pws:
                 continue
             for embed in embeds: 
                 self.data.append(embed)

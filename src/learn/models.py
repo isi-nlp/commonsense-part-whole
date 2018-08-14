@@ -193,11 +193,13 @@ class DefEncoder(BaseModel):
 class TripleMLP(BaseModel):
     def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         super(TripleMLP, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        self._make_mlp_and_final(0)
 
+    def _make_mlp_and_final(self, extra_input_dim):
         #first hidden layer
         if self.num_layers > 0:
             if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+                seq = [nn.Linear(self.embed_size*len(self.words)+extra_input_dim, self.hidden_size)]
             else:
                 seq = [nn.Linear(self.embed_size, self.hidden_size)]
             seq = self._add_nonlinearity(seq)
@@ -218,9 +220,8 @@ class TripleMLP(BaseModel):
             out_dim = 1
         self.MLP = nn.Sequential(*seq)
         bbox_dim = 5 if self.bbox else 0
-        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + extra_input_dim + bbox_dim
         self.final = nn.Linear(final_input, out_dim)
-
     
     def forward(self, triples, labels, bbox_fs=None, embeds=None):
         #embeddings
@@ -360,4 +361,25 @@ class PartWholeInteract(TripleMLP):
             loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
         return pred, loss
 
+
+class TripleMLPImage(TripleMLP):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        super(TripleMLPImage, self).__init__(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        self._make_mlp_and_final(2048*2)
+
+    def forward(self, triples, labels, featws, featps):
+        inp = self._get_embeddings(triples)
+        inp = torch.cat([inp, torch.tensor(featws).to(self.device), torch.tensor(featps).to(self.device)], 1)
+        #the rest
+        logits = self.MLP(inp)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
+        if self.loss_fn == 'cross_entropy':
+            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
+        elif self.loss_fn == 'mse':
+            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        elif self.loss_fn == 'smooth_l1':
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        return pred, loss
 
