@@ -1,6 +1,7 @@
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from torch.utils.data import Dataset
+import spacy
 
 class TripleDataset(Dataset):
     def __init__(self, fname, binary, only_use, **kwargs):
@@ -33,7 +34,7 @@ class TripleDataset(Dataset):
 
 class DefinitionDataset(Dataset):
     def __init__(self, fname, binary, only_use, **kwargs):
-        self.dataset = pd.read_csv(fname)
+        self.dataset = pd.read_csv(fname, delimiter='\t')
         self.binary = binary
         self.word2ix = None
         if only_use == 'pw':
@@ -45,11 +46,16 @@ class DefinitionDataset(Dataset):
         else:
             self.words = ['whole', 'part', 'jj']
         
-        #make sklearn build the vocab for me
+        #make sklearn/spacy build the vocab for me
+        self.nlp = spacy.load('en', disable=['tagger', 'parser', 'ner', 'textcat'])
         vectorizer = CountVectorizer(tokenizer=str.split)
-        self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row[f'{w}_def'] for w in self.words]), axis=1)
-        feats = vectorizer.fit_transform(self.triples['cat'])
+        self.dataset['cat'] = self.dataset.apply(self._preprocess_dfns, axis=1)
+        feats = vectorizer.fit_transform(self.dataset['cat'])
         self.word2ix = vectorizer.vocabulary_
+
+    def _preprocess_dfns(self, row):
+        joined = ' '.join([row[f'{w}_def'] for w in self.words])
+        return ' '.join([tok.text for tok in self.nlp(joined)])
 
     def __len__(self):
         return len(self.dataset)

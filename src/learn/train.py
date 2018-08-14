@@ -34,6 +34,8 @@ if __name__ == "__main__":
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
     parser.add_argument('--comb', choices=['concat', 'add', 'mult'], default='concat', help='how to combine embeddings (default: concat)')
     parser.add_argument('--epochs', type=int, default=50, help='maximum number of epochs (default: 50)')
+    parser.add_argument('--lstm-layers', dest='lstm_layers', type=int, default=1, help='number of layers in the lstm encoders')
+    parser.add_argument('--bidirectional', action='store_const', const=True, help='flag to use bilstm encoders')
     parser.add_argument('--kernel-size', dest='kernel_size', type=int, default=3, help='kernel size for conv over part-whole interaction (default: 3)')
     parser.add_argument('--hidden-size', dest='hidden_size', type=int, default=128, help='MLP hidden size (default: 128)')
     parser.add_argument('--num-layers', dest='num_layers', type=int, default=2, help='MLP number of hidden layers (default: 2; 0 = do LogReg)')
@@ -63,8 +65,10 @@ if __name__ == "__main__":
     trip2embeds = defaultdict(list)
     if args.bbox_feats:
         dset = datasets.TripleBboxDataset
+        collate_fn = utils.tuple_collate
     elif args.model == 'definitions':
         dset = datasets.DefinitionDataset
+        collate_fn = utils.dfn_collate
     elif args.embed_type == 'elmo_context' and 'retr' in args.embed_file:
         print("loading elmo retrieved embeds")
         with open(args.embed_file) as f:
@@ -73,18 +77,21 @@ if __name__ == "__main__":
             for row in tqdm(r):
                 trip2embeds[tuple(row[:3])] = np.array(row[4:])
         dset = datasets.TripleRetrDataset
+        collate_fn = utils.tuple_collate
     else:
         dset = datasets.TripleDataset
+        collate_fn = utils.tuple_collate
     train_set = dset(args.file, args.binary, args.only_use, trip2embeds=trip2embeds)
     dev_set = dset(args.file.replace('train', 'dev'), args.binary, args.only_use, trip2embeds=trip2embeds)
     test_set = dset(args.file.replace('train', 'test'), args.binary, args.only_use, trip2embeds=trip2embeds)
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=utils.tuple_collate)
-    dev_loader = DataLoader(dev_set, batch_size=args.batch_size, shuffle=True, collate_fn=utils.tuple_collate)
-    test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, collate_fn=utils.tuple_collate)
+    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
+    dev_loader = DataLoader(dev_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
+    test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
 
     #memory
     del trip2embeds
 
+    #combine word lookups
     word2ix = train_set.word2ix
     if args.embed_file is not None:
         #use all embeddings
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     elif args.model == 'pwi':
         model = models.PartWholeInteract(args.hidden_size, args.num_layers, args.kernel_size, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     elif args.model == 'definitions':
-        model = models.DefEncoder(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+        model = models.DefEncoder(args.hidden_size, args.bidirectional, args.lstm_layers, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     print(model)
     if args.test_model:
         sd = torch.load(args.test_model)
@@ -132,6 +139,9 @@ if __name__ == "__main__":
                     elif isinstance(train_set, datasets.TripleRetrDataset):
                         triples, labels, embeds = data
                         preds, loss = model(triples, labels, embeds=embeds)
+                    elif isinstance(train_set, datasets.DefinitionDataset):
+                        *dfns, labels = data
+                        preds, loss = model(dfns, labels)
                     else:
                         triples, labels = data
                         preds, loss = model(triples, labels)
@@ -158,9 +168,12 @@ if __name__ == "__main__":
             model.eval()
             dev_trips, dev_golds, dev_preds = [], [], []
             for batch_ix, data in tqdm(enumerate(dev_loader)):
-                if args.bbox_feats:
+                if isinstance(train_set, datasets.TripleBboxDataset):
                     triples, labels, bbox_fs = data
                     preds, loss = model(triples, labels, bbox_fs=bbox_fs)
+                elif isinstance(train_set, datasets.DefinitionDataset):
+                    *dfns, labels = data
+                    preds, loss = model(dfns, labels)
                 else:
                     triples, labels = data
                     preds, loss = model(triples, labels)

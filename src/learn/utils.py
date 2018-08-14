@@ -8,6 +8,31 @@ import torch
 def tuple_collate(batch):
     return [[b[i] for b in batch] for i in range(len(batch[0]))]
 
+def dfn_collate(batch):
+    wdfns, pdfns, jdfns, labels = [], [], [], []
+    wlen, plen, jlen = 0, 0, 0
+    for (wdfn, pdfn, jdfn), label in batch:
+        wdfns.append(wdfn.split())
+        pdfns.append(pdfn.split())
+        jdfns.append(jdfn.split())
+        labels.append(label)
+        if len(wdfn.split()) > wlen:
+            wlen = len(wdfn.split())
+        if len(pdfn.split()) > plen:
+            plen = len(pdfn.split())
+        if len(jdfn.split()) > jlen:
+            jlen = len(jdfn.split())
+    for wdfn in wdfns:
+        if len(wdfn) < wlen:
+            wdfn.extend(["*PAD*"] * (wlen - len(wdfn)))
+    for pdfn in pdfns:
+        if len(pdfn) < plen:
+            pdfn.extend(["*PAD*"] * (plen - len(pdfn)))
+    for jdfn in jdfns:
+        if len(jdfn) < jlen:
+            jdfn.extend(["*PAD*"] * (jlen - len(jdfn)))
+    return wdfns, pdfns, jdfns, labels
+
 def early_stop(metrics, criterion, patience):
     if not np.all(np.isnan(metrics[criterion])):
         if criterion in ['mse', 'loss_dev']:

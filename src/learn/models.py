@@ -1,4 +1,5 @@
 import json
+from math import floor
 import h5py
 import numpy as np
 import torch
@@ -8,43 +9,18 @@ import torch.nn.functional as F
 def gelu(x):
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
 
+
 class GELU(nn.Module):
     def forward(self, input):
         return gelu(input)
 
-class TripleMLP(nn.Module):
-    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
-        super(TripleMLP, self).__init__()
-        self._embed_init(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
 
-        #first hidden layer
-        if self.num_layers > 0:
-            if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
-            else:
-                seq = [nn.Linear(self.embed_size, self.hidden_size)]
-            seq = self._add_nonlinearity(seq)
-            seq.append(nn.Dropout(p=self.dropout))
+class BaseModel(nn.Module):
+    def __init__(self, load_embeds, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        super(BaseModel, self).__init__()
+        self._init(load_embeds, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
 
-            #more hidden layers
-            for _ in range(self.num_layers-1):
-                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
-                seq = self._add_nonlinearity(seq)
-                seq.append(nn.Dropout(p=self.dropout))
-        else:
-            seq = []
-
-        #output
-        if self.loss_fn == 'cross_entropy':
-            out_dim = 2 if self.binary else 5
-        elif self.loss_fn in ['mse', 'smooth_l1']:
-            out_dim = 1
-        self.MLP = nn.Sequential(*seq)
-        bbox_dim = 5 if self.bbox else 0
-        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
-        self.final = nn.Linear(final_input, out_dim)
-
-    def _embed_init(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+    def _init(self, load_embeds, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.nonlinearity = nonlinearity
@@ -67,6 +43,8 @@ class TripleMLP(nn.Module):
             self.words = ['whole', 'part', 'jj']
         self.comb = comb
         self.bbox = bbox
+        if not load_embeds:
+            return
 
         #set up embedding layer, either with elmo or from scratch
         if embed_file:
@@ -79,6 +57,7 @@ class TripleMLP(nn.Module):
                     self.word2vec = json.load(f)
                 self.embed_size = 300
                 self.word2vec['UNK'] = np.random.uniform(-0.02, 0.02, self.embed_size)
+                self.word2vec['*PAD*'] = np.random.uniform(-0.02, 0.02, self.embed_size)
             elif embed_type == 'elmo_context':
                 self.trip2vec = {}
                 with open(embed_file) as f:
@@ -119,6 +98,130 @@ class TripleMLP(nn.Module):
         embeddings = np.concatenate([embeddings, np.random.uniform(-.2, .2, size=(1,self.embed_size))])
         self.embed.weight.data.copy_(torch.from_numpy(embeddings))
 
+
+class DefEncoder(BaseModel):
+    def __init__(self, hidden_size, bidirectional, lstm_layers, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        super(DefEncoder, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        self.lstm_layers = lstm_layers
+        self.bidirectional = bidirectional is not None
+        self.num_directions = 2 if bidirectional else 1
+
+        #LSTMs
+        self.whole_lstm = nn.LSTM(self.embed_size, floor(self.hidden_size/self.num_directions), self.lstm_layers, bidirectional=self.bidirectional)
+        self.part_lstm = nn.LSTM(self.embed_size, floor(self.hidden_size/self.num_directions), self.lstm_layers, bidirectional=self.bidirectional)
+        self.jj_lstm = nn.LSTM(self.embed_size, floor(self.hidden_size/self.num_directions), self.lstm_layers, bidirectional=self.bidirectional)
+
+        #first hidden layer
+        if self.num_layers > 0:
+            if self.comb == 'concat':
+                seq = [nn.Linear(self.hidden_size*len(self.words), self.hidden_size)]
+            else:
+                seq = [nn.Linear(self.hidden_size, self.hidden_size)]
+            seq = self._add_nonlinearity(seq)
+            seq.append(nn.Dropout(p=self.dropout))
+
+            #more hidden layers
+            for _ in range(self.num_layers-1):
+                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+                seq = self._add_nonlinearity(seq)
+                seq.append(nn.Dropout(p=self.dropout))
+        else:
+            seq = []
+
+        #output
+        if self.loss_fn == 'cross_entropy':
+            out_dim = 2 if self.binary else 5
+        elif self.loss_fn in ['mse', 'smooth_l1']:
+            out_dim = 1
+        self.MLP = nn.Sequential(*seq)
+        bbox_dim = 5 if self.bbox else 0
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        self.final = nn.Linear(final_input, out_dim)
+
+    def forward(self, dfns, labels, bbox_fs=None, embeds=None):
+        batch_sz = len(labels)
+        self._refresh(batch_sz)
+        #embed definitions
+        wembs = []
+        pembs = []
+        jembs = []
+        for wdef, pdef, jdef in zip(*dfns):
+            wemb = [self.word2vec[w] if w in self.word2vec else self.word2vec['UNK'] for w in wdef]
+            pemb = [self.word2vec[w] if w in self.word2vec else self.word2vec['UNK'] for w in pdef]
+            jemb = [self.word2vec[w] if w in self.word2vec else self.word2vec['UNK'] for w in jdef]
+            wembs.append(wemb)
+            pembs.append(pemb)
+            jembs.append(jemb)
+        wembs = torch.tensor(wembs, dtype=torch.float).t()
+        pembs = torch.tensor(pembs, dtype=torch.float).t()
+        jembs = torch.tensor(jembs, dtype=torch.float).t()
+
+        #apply LSTMs
+        whole_out, self.whole_hidden = self.whole_lstm(wembs)
+        wenc = self.whole_hidden[0][-1] if self.num_directions == 1 else self.whole_hidden[0][-2:].transpose(0,1).contiguous().view(self.batch_sz, -1)
+
+        part_out, self.part_hidden = self.part_lstm(pembs)
+        penc = self.part_hidden[0][-1] if self.num_directions == 1 else self.part_hidden[0][-2:].transpose(0,1).contiguous().view(self.batch_sz, -1)
+
+        jj_out, self.jj_hidden = self.jj_lstm(jembs)
+        jenc = self.jj_hidden[0][-1] if self.num_directions == 1 else self.jj_hidden[0][-2:].transpose(0,1).contiguous().view(self.batch_sz, -1)
+
+        inp = torch.cat([wenc, penc, jenc], 1)
+
+        #the rest
+        logits = self.MLP(inp)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
+        loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
+        return pred, loss
+
+    def _init_hidden(self):
+        wh_0 = torch.zeros(self.num_directions*self.num_layers, self.batch_sz, floor(self.hidden_size/self.num_directions), dtype=torch.float).to(self.device)
+        wc_0 = torch.zeros(self.num_directions*self.num_layers, self.batch_sz, floor(self.hidden_size/self.num_directions), dtype=torch.float).to(self.device)
+        ph_0 = torch.zeros(self.num_directions*self.num_layers, self.batch_sz, floor(self.hidden_size/self.num_directions), dtype=torch.float).to(self.device)
+        pc_0 = torch.zeros(self.num_directions*self.num_layers, self.batch_sz, floor(self.hidden_size/self.num_directions), dtype=torch.float).to(self.device)
+        jh_0 = torch.zeros(self.num_directions*self.num_layers, self.batch_sz, floor(self.hidden_size/self.num_directions), dtype=torch.float).to(self.device)
+        jc_0 = torch.zeros(self.num_directions*self.num_layers, self.batch_sz, floor(self.hidden_size/self.num_directions), dtype=torch.float).to(self.device)
+        return (wh_0, wc_0), (ph_0, pc_0), (jh_0, jc_0)
+
+    def _refresh(self, batch_sz):
+        self.batch_sz = batch_sz
+        self.whole_hidden, self.part_hidden, self.jj_hidden = self._init_hidden()
+
+
+class TripleMLP(BaseModel):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        super(TripleMLP, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+
+        #first hidden layer
+        if self.num_layers > 0:
+            if self.comb == 'concat':
+                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+            else:
+                seq = [nn.Linear(self.embed_size, self.hidden_size)]
+            seq = self._add_nonlinearity(seq)
+            seq.append(nn.Dropout(p=self.dropout))
+
+            #more hidden layers
+            for _ in range(self.num_layers-1):
+                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+                seq = self._add_nonlinearity(seq)
+                seq.append(nn.Dropout(p=self.dropout))
+        else:
+            seq = []
+
+        #output
+        if self.loss_fn == 'cross_entropy':
+            out_dim = 2 if self.binary else 5
+        elif self.loss_fn in ['mse', 'smooth_l1']:
+            out_dim = 1
+        self.MLP = nn.Sequential(*seq)
+        bbox_dim = 5 if self.bbox else 0
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        self.final = nn.Linear(final_input, out_dim)
+
+    
     def forward(self, triples, labels, bbox_fs=None, embeds=None):
         #embeddings
         if not embeds:
@@ -206,7 +309,7 @@ class TripleMLP(nn.Module):
 
 class PartWholeInteract(TripleMLP):
     def __init__(self, hidden_size, num_layers, kernel_size, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
-        super(PartWholeInteract, self).__init__(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        super(PartWholeInteract, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
         self.conv = nn.Conv1d(self.embed_size, self.embed_size, kernel_size=kernel_size)
         #first hidden layer
         if self.num_layers > 0:
