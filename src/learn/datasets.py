@@ -43,8 +43,8 @@ class TripleImageDataset(TripleDataset):
         #also load image feature lookups
         self.pw2featw = {}
         self.pw2featp = {}
-        #with open('../../data/candidates/pw_img_avg_feats.jsonl') as f:
-        with open('../../data/candidates/pw_max_iou_feats.jsonl') as f:
+        with open('../../data/candidates/pw_img_avg_feats.jsonl') as f:
+        #with open('../../data/candidates/pw_max_iou_feats.jsonl') as f:
             for line in f:
                 obj = json.loads(line.strip())
                 whole, part = obj['whole'], obj['part']

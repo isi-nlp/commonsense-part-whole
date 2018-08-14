@@ -28,7 +28,7 @@ EXP_DIR = '../../experiments'
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to train file')
-    parser.add_argument('--model', choices=['MLP', 'pwi', 'vis', 'definitions'], default="MLP", help="which model to train (default: MLP)")
+    parser.add_argument('--model', choices=['MLP', 'pwi', 'vis', 'visadd', 'definitions'], default="MLP", help="which model to train (default: MLP)")
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
     parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'conceptnet', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     elif args.model == 'definitions':
         dset = datasets.DefinitionDataset
         collate_fn = utils.dfn_collate
-    elif args.model == 'vis':
+    elif args.model.startswith('vis'):
         dset = datasets.TripleImageDataset
         collate_fn = utils.tuple_collate
     elif args.embed_type == 'elmo_context' and 'retr' in args.embed_file:
@@ -114,6 +114,8 @@ if __name__ == "__main__":
         model = models.DefEncoder(args.hidden_size, args.bidirectional, args.lstm_layers, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     elif args.model == 'vis':
         model = models.TripleMLPImage(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+    elif args.model == 'visadd':
+        model = models.TripleMLPImageAdd(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     print(model)
     if args.test_model:
         sd = torch.load(args.test_model)
