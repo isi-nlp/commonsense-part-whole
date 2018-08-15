@@ -59,6 +59,7 @@ if __name__ == "__main__":
     args.exec_time = time.strftime('%b_%d_%H:%M:%S', time.localtime())
     if not args.no_plot and not args.test_model:
         args.vis = plotter.Plotter(args)
+    args.retr = False
     device = torch.device('cuda' if args.gpu else 'cpu')
 
     ### DATA LOADERS
@@ -73,12 +74,16 @@ if __name__ == "__main__":
         dset = datasets.TripleImageDataset
         collate_fn = utils.tuple_collate
     elif args.embed_type == 'elmo_context' and 'retr' in args.embed_file:
+        args.retr = True
         print("loading elmo retrieved embeds")
         with open(args.embed_file) as f:
             r = csv.reader(f)
             next(r)
             for row in tqdm(r):
-                trip2embeds[tuple(row[:3])] = np.array(row[4:])
+                try:
+                    trip2embeds[tuple(row[:3])].append(np.array(row[3:], dtype=np.float32))
+                except:
+                    continue
         dset = datasets.TripleRetrDataset
         collate_fn = utils.tuple_collate
     else:
@@ -181,6 +186,9 @@ if __name__ == "__main__":
                 if isinstance(train_set, datasets.TripleBboxDataset):
                     triples, labels, bbox_fs = data
                     preds, loss = model(triples, labels, bbox_fs=bbox_fs)
+                elif isinstance(train_set, datasets.TripleRetrDataset):
+                    triples, labels, embeds = data
+                    preds, loss = model(triples, labels, embeds=embeds)
                 elif isinstance(train_set, datasets.DefinitionDataset):
                     *dfns, labels = data
                     preds, loss = model(dfns, labels)

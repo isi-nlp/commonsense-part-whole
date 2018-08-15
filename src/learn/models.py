@@ -1,3 +1,4 @@
+import csv
 import json
 from math import floor
 import h5py
@@ -59,14 +60,15 @@ class BaseModel(nn.Module):
                 self.word2vec['UNK'] = np.random.uniform(-0.02, 0.02, self.embed_size)
                 self.word2vec['*PAD*'] = np.random.uniform(-0.02, 0.02, self.embed_size)
             elif embed_type == 'elmo_context':
-                self.trip2vec = {}
-                with open(embed_file) as f:
-                    r = csv.reader(f)
-                    #header
-                    next(r)
-                    for row in r:
-                        self.trip2vec[tuple(row[:3])] = torch.tensor(np.array(row[3:], dtype=np.float32)).to(self.device)
-                self.trip_embeds = True
+                if 'retr' not in embed_file:
+                    self.trip2vec = {}
+                    with open(embed_file) as f:
+                        r = csv.reader(f)
+                        #header
+                        next(r)
+                        for row in r:
+                            self.trip2vec[tuple(row[:3])] = torch.tensor(np.array(row[3:], dtype=np.float32)).to(self.device)
+                    self.trip_embeds = True
                 self.embed_size = 1024
 
         if embed_file is None:
@@ -228,8 +230,7 @@ class TripleMLP(BaseModel):
         if not embeds:
             inp = self._get_embeddings(triples)
         else:
-            import pdb; pdb.set_trace()
-            inp = torch.Tensor(embeds)
+            inp = torch.Tensor(embeds).to(self.device)
         #the rest
         logits = self.MLP(inp)
         if self.bbox and bbox_fs is not None:

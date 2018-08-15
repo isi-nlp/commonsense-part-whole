@@ -1,3 +1,4 @@
+import csv
 import json
 
 import pandas as pd
@@ -108,7 +109,7 @@ class TripleRetrDataset(Dataset):
                 continue
             for embed in embeds: 
                 self.data.append(embed)
-                self.labels.append(trip2label[trip])
+                self.labels.append(tuple([int(x) for x in trip2label[trip]]))
                 self.trips.append(trip)
         self.binary = binary
         self.word2ix = None
@@ -130,7 +131,7 @@ class TripleRetrDataset(Dataset):
         self.word2ix = vectorizer.vocabulary_
 
     def __len__(self):
-        return sum([len(v) for v in self.trip2embed.values()])
+        return len(self.trips)
 
     def __getitem__(self, idx):
         l_ix = 1 if self.binary else 0
