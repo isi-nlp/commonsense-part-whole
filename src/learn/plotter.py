@@ -1,3 +1,6 @@
+"""
+    Visdom plotter
+"""
 import numpy as np
 import visdom
 

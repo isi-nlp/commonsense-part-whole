@@ -1,5 +1,5 @@
 """
-    Starting with elmo embeddings for a (whole, part, jj) triple, combine them with an MLP and predict
+    General purpose script to train different models on the word-level data with various feature sets
 """
 import argparse
 import csv

@@ -1,3 +1,6 @@
+"""
+    All MLP embedding-based models
+"""
 import csv
 import json
 from math import floor

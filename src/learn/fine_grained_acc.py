@@ -1,3 +1,6 @@
+"""
+    ad-hoc script to get accuracy performance per whole, part, adjective and save
+"""
 import argparse, csv, operator, os
 
 import pandas as pd
