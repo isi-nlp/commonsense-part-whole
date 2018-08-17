@@ -23,8 +23,8 @@ def replace_template(soup, span, whole=None, part=None, jj=None):
         new_span.string = span.text.replace('ADJECTIVE', jj)
     return new_span
 
-def reload_template(whole, part):
-    prompt = open('prompt_imgs.xml').read()
+def reload_template(whole, part, template):
+    prompt = open(template).read()
     full = xmltodict.parse(prompt)
     soup = bs4.BeautifulSoup(full['HTMLQuestion']['HTMLContent'], 'lxml')
     form = soup.body.form
@@ -95,7 +95,9 @@ if __name__ == "__main__":
     parser.add_argument('--max-pws', default=100000, dest='max_pws', type=int, help="maximum number of part-wholes to make HITs from")
     parser.add_argument('--dry-run', dest='dry_run', action='store_const', const=True, help='flag to not actually make HITs')
     parser.add_argument('--jjs-per-hit', dest='jjs_per_hit', type=int, default=3, help="maximum number of questions per HIT (jj's per part-whole)")
+    parser.add_argument('--reverse', action='store_const', const=True, help='flag to use reverse template')
     args = parser.parse_args()
+    args.template = 'prompt_imgs_reverse.xml' if args.reverse else 'prompt_imgs.xml' 
 
     ############# AWS STUFF #################
     with open('/home/jamesm/.aws/credentials.csv') as f:
@@ -150,7 +152,7 @@ if __name__ == "__main__":
  
             whole = whole.replace('_', ' ')
             part = part.replace('_', ' ')
-            prompt, full, soup, form = reload_template(whole, part)
+            prompt, full, soup, form = reload_template(whole, part, args.template)
             if prompt is None:
                 continue
 
@@ -191,7 +193,7 @@ if __name__ == "__main__":
                     if num_hits % 100 == 0:
                         print("num hits: %d" % num_hits)
                     #reload the template
-                    prompt, full, soup, form = reload_template(whole, part)
+                    prompt, full, soup, form = reload_template(whole, part, args.template)
                     if prompt is None:
                         continue
                 if num_hits >= args.max_hits:

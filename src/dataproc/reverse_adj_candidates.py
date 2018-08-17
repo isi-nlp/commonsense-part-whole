@@ -49,16 +49,16 @@ for img in attrs:
                 noun2jjs_vg[attr['names'][0]][jj] += 1
  
 print("reading part-whole candidates")
-whole2parts = defaultdict(set)
+part2wholes = defaultdict(set)
 with open(args.pw_dataset) as f:
     delim = ',' if args.non_visual else '\t'
     r = csv.reader(f, delimiter=delim)
     #header
     next(r)
     for row in r:
-        whole2parts[row[0].replace('_', ' ')].add(row[1])
+        part2wholes[row[1]].add(row[0].replace('_', ' '))
 
-wholes = set(whole2parts.keys())
+parts = set(part2wholes.keys())
 
 if args.non_visual:
     triples = set([tuple(row) for row in csv.reader(open('../../data/adjectives/vg_only_mturk_candidates_mwe.csv'))])
@@ -67,39 +67,38 @@ COLORS = set(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'violet', 'b
 #take top 5 adjectives for the whole
 with open(args.out_file, 'w') as of:
     w = csv.writer(of)
-    for whole in tqdm(wholes):
-        whole = whole.replace('_', ' ')
+    for part in tqdm(parts):
 
         jjs = []
         #take top five adjectives from n-grams
-        if whole in noun2jjs:
-            jjs.extend(list(noun2jjs[whole])[:5])
-            whole_for_adj = whole
+        if part in noun2jjs:
+            jjs.extend(list(noun2jjs[part])[:5])
+            part_for_adj = part
         #for multi-word nouns, try taking adjectives for the second noun
-        elif ' ' in whole and whole.split(' ')[1] in noun2jjs_vg:
-            jjs.extend(list(noun2jjs[whole.split(' ')[1]])[:5])
-            whole_for_adj = whole.split(' ')[1]
+        elif ' ' in part and part.split(' ')[1] in noun2jjs_vg:
+            jjs.extend(list(noun2jjs[part.split(' ')[1]])[:5])
+            part_for_adj = part.split(' ')[1]
 
         #optionally take top five adjectives from VG as well
-        if whole in noun2jjs_vg:
-            jjs.extend(list(noun2jjs_vg[whole])[:5])
-        elif ' ' in whole and whole.split(' ')[1] in noun2jjs_vg:
-            jjs.extend(list(noun2jjs_vg[whole.split(' ')[1]])[:5])
+        if part in noun2jjs_vg:
+            jjs.extend(list(noun2jjs_vg[part])[:5])
+        elif ' ' in part and part.split(' ')[1] in noun2jjs_vg:
+            jjs.extend(list(noun2jjs_vg[part.split(' ')[1]])[:5])
 
         if len(jjs) == 0:
-            print("whole had no jj's found: %s" % whole)
-            import pdb; pdb.set_trace()
+            print("part had no jj's found: %s" % part)
             continue
 
-        for part in whole2parts[whole]:
+        for whole in part2wholes[part]:
+            whole = whole.replace('_', ' ')
             found_color = False
             for jj in jjs:
-                #filter jjs where the jj-whole forms a common expression (in wordnet) (e.g. dutch oven, sick bed)
-                if len(wn.synsets('_'.join([jj, whole_for_adj]))) == 0 and len(wn.synsets(''.join([jj, whole_for_adj]))) == 0:
+                #filter jjs where the jj-part forms a common expression (in wordnet) (e.g. dutch oven, sick bed)
+                if len(wn.synsets('_'.join([jj, part_for_adj]))) == 0 and len(wn.synsets(''.join([jj, part_for_adj]))) == 0:
                     if (not args.non_visual) or ((whole, part, jj) not in triples):
                         #optionally filter to adjectives that have been applied to the part (in n-grams) as well
-                        if part in noun2jjs:
-                            if jj in noun2jjs[part]:
+                        if whole in noun2jjs:
+                            if jj in noun2jjs[whole]:
                                 if part != whole and '.' not in whole and '.' not in part:
                                     if jj in COLORS:
                                         if not found_color:
@@ -107,8 +106,8 @@ with open(args.out_file, 'w') as of:
                                             found_color = True
                                     else:
                                         w.writerow([whole, part, jj])
-                        elif ' ' in part and part.split(' ')[1] in noun2jjs:
-                            if jj in noun2jjs[part.split(' ')[1]]:
+                        elif ' ' in whole and whole.split(' ')[1] in noun2jjs:
+                            if jj in noun2jjs[whole.split(' ')[1]]:
                                 if part != whole and '.' not in whole and '.' not in part:
                                     if jj in COLORS:
                                         if not found_color:

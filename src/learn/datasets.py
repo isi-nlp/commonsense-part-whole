@@ -1,3 +1,7 @@
+import csv
+import json
+import os
+
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from torch.utils.data import Dataset
@@ -92,7 +96,6 @@ class TripleRetrDataset(Dataset):
         #make sklearn build the vocab for me
         self.triples = pd.read_csv(fname)
         vectorizer = CountVectorizer(tokenizer=str.split)
-        #self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row['whole'], row['part'], row['jj']]), axis=1)
         self.triples['cat'] = self.triples.apply(lambda row: ' '.join([row[w] for w in self.words]), axis=1)
         feats = vectorizer.fit_transform(self.triples['cat'])
         self.word2ix = vectorizer.vocabulary_

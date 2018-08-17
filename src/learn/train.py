@@ -70,7 +70,7 @@ if __name__ == "__main__":
         dset = datasets.DefinitionDataset
         collate_fn = utils.dfn_collate
     elif args.embed_type == 'elmo_context' and 'retr' in args.embed_file:
-        print("loading elmo retrieved embeds")
+        print("loading elmo retrieved embeds...")
         with open(args.embed_file) as f:
             r = csv.reader(f)
             next(r)
@@ -81,12 +81,14 @@ if __name__ == "__main__":
     else:
         dset = datasets.TripleDataset
         collate_fn = utils.tuple_collate
+    print("loading datasets... ", end='')
     train_set = dset(args.file, args.binary, args.only_use, trip2embeds=trip2embeds)
     dev_set = dset(args.file.replace('train', 'dev'), args.binary, args.only_use, trip2embeds=trip2embeds)
     test_set = dset(args.file.replace('train', 'test'), args.binary, args.only_use, trip2embeds=trip2embeds)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     dev_loader = DataLoader(dev_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
+    print("done")
 
     #memory
     del trip2embeds
@@ -138,6 +140,7 @@ if __name__ == "__main__":
                         preds, loss = model(triples, labels, bbox_fs=bbox_fs)
                     elif isinstance(train_set, datasets.TripleRetrDataset):
                         triples, labels, embeds = data
+                        import pdb; pdb.set_trace()
                         preds, loss = model(triples, labels, embeds=embeds)
                     elif isinstance(train_set, datasets.DefinitionDataset):
                         *dfns, labels = data
