@@ -28,7 +28,7 @@ EXP_DIR = '../../experiments'
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('file', type=str, help='path to train file')
-    parser.add_argument('--model', choices=['MLP', 'pwi', 'definitions'], default="MLP", help="which model to train (default: MLP)")
+    parser.add_argument('--model', choices=['MLP', 'pwi', 'vis', 'visadd', 'definitions'], default="MLP", help="which model to train (default: MLP)")
     parser.add_argument('--embed-file', dest='embed_file', type=str, help='path to embeddings file. If not given, trains embeddings from scratch')
     parser.add_argument('--embed-type', dest='embed_type', choices=['elmo', 'glove', 'conceptnet', 'word2vec', 'elmo_context'], help='type of pretrained embedding to use')
     parser.add_argument('--only-use', dest='only_use', choices=['pw', 'wjj', 'pjj'], help='flag to use only two words, specifying which two words to use')
@@ -59,6 +59,7 @@ if __name__ == "__main__":
     args.exec_time = time.strftime('%b_%d_%H:%M:%S', time.localtime())
     if not args.no_plot and not args.test_model:
         args.vis = plotter.Plotter(args)
+    args.retr = False
     device = torch.device('cuda' if args.gpu else 'cpu')
 
     ### DATA LOADERS
@@ -69,13 +70,20 @@ if __name__ == "__main__":
     elif args.model == 'definitions':
         dset = datasets.DefinitionDataset
         collate_fn = utils.dfn_collate
+    elif args.model.startswith('vis'):
+        dset = datasets.TripleImageDataset
+        collate_fn = utils.tuple_collate
     elif args.embed_type == 'elmo_context' and 'retr' in args.embed_file:
-        print("loading elmo retrieved embeds...")
+        args.retr = True
+        print("loading elmo retrieved embeds")
         with open(args.embed_file) as f:
             r = csv.reader(f)
             next(r)
             for row in tqdm(r):
-                trip2embeds[tuple(row[:3])] = np.array(row[4:])
+                try:
+                    trip2embeds[tuple(row[:3])].append(np.array(row[3:], dtype=np.float32))
+                except:
+                    continue
         dset = datasets.TripleRetrDataset
         collate_fn = utils.tuple_collate
     else:
@@ -111,6 +119,10 @@ if __name__ == "__main__":
         model = models.PartWholeInteract(args.hidden_size, args.num_layers, args.kernel_size, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     elif args.model == 'definitions':
         model = models.DefEncoder(args.hidden_size, args.bidirectional, args.lstm_layers, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+    elif args.model == 'vis':
+        model = models.TripleMLPImage(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
+    elif args.model == 'visadd':
+        model = models.TripleMLPImageAdd(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
     print(model)
     if args.test_model:
         sd = torch.load(args.test_model)
@@ -145,6 +157,9 @@ if __name__ == "__main__":
                     elif isinstance(train_set, datasets.DefinitionDataset):
                         *dfns, labels = data
                         preds, loss = model(dfns, labels)
+                    elif isinstance(train_set, datasets.TripleImageDataset):
+                        triples, labels, featws, featps = data
+                        preds, loss = model(triples, labels, featws, featps)
                     else:
                         triples, labels = data
                         preds, loss = model(triples, labels)
@@ -174,9 +189,15 @@ if __name__ == "__main__":
                 if isinstance(train_set, datasets.TripleBboxDataset):
                     triples, labels, bbox_fs = data
                     preds, loss = model(triples, labels, bbox_fs=bbox_fs)
+                elif isinstance(train_set, datasets.TripleRetrDataset):
+                    triples, labels, embeds = data
+                    preds, loss = model(triples, labels, embeds=embeds)
                 elif isinstance(train_set, datasets.DefinitionDataset):
                     *dfns, labels = data
                     preds, loss = model(dfns, labels)
+                elif isinstance(train_set, datasets.TripleImageDataset):
+                    triples, labels, featws, featps = data
+                    preds, loss = model(triples, labels, featws, featps)
                 else:
                     triples, labels = data
                     preds, loss = model(triples, labels)

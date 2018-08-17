@@ -60,14 +60,15 @@ class BaseModel(nn.Module):
                 self.word2vec['UNK'] = np.random.uniform(-0.02, 0.02, self.embed_size)
                 self.word2vec['*PAD*'] = np.random.uniform(-0.02, 0.02, self.embed_size)
             elif embed_type == 'elmo_context':
-                self.trip2vec = {}
-                with open(embed_file) as f:
-                    r = csv.reader(f)
-                    #header
-                    next(r)
-                    for row in r:
-                        self.trip2vec[tuple(row[:3])] = torch.tensor(np.array(row[3:], dtype=np.float32)).to(self.device)
-                self.trip_embeds = True
+                if 'retr' not in embed_file:
+                    self.trip2vec = {}
+                    with open(embed_file) as f:
+                        r = csv.reader(f)
+                        #header
+                        next(r)
+                        for row in r:
+                            self.trip2vec[tuple(row[:3])] = torch.tensor(np.array(row[3:], dtype=np.float32)).to(self.device)
+                    self.trip_embeds = True
                 self.embed_size = 1024
 
         if embed_file is None:
@@ -194,11 +195,13 @@ class DefEncoder(BaseModel):
 class TripleMLP(BaseModel):
     def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         super(TripleMLP, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        self._make_mlp_and_final(0)
 
+    def _make_mlp_and_final(self, extra_input_dim):
         #first hidden layer
         if self.num_layers > 0:
             if self.comb == 'concat':
-                seq = [nn.Linear(self.embed_size*len(self.words), self.hidden_size)]
+                seq = [nn.Linear(self.embed_size*len(self.words)+extra_input_dim, self.hidden_size)]
             else:
                 seq = [nn.Linear(self.embed_size, self.hidden_size)]
             seq = self._add_nonlinearity(seq)
@@ -219,17 +222,15 @@ class TripleMLP(BaseModel):
             out_dim = 1
         self.MLP = nn.Sequential(*seq)
         bbox_dim = 5 if self.bbox else 0
-        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + bbox_dim
+        final_input = self.hidden_size + bbox_dim if self.num_layers > 0 else self.embed_size * len(self.words) + extra_input_dim + bbox_dim
         self.final = nn.Linear(final_input, out_dim)
-
     
     def forward(self, triples, labels, bbox_fs=None, embeds=None):
         #embeddings
         if not embeds:
             inp = self._get_embeddings(triples)
         else:
-            import pdb; pdb.set_trace()
-            inp = torch.Tensor(embeds)
+            inp = torch.Tensor(embeds).to(self.device)
         #the rest
         logits = self.MLP(inp)
         if self.bbox and bbox_fs is not None:
@@ -360,5 +361,143 @@ class PartWholeInteract(TripleMLP):
         elif self.loss_fn == 'smooth_l1':
             loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
         return pred, loss
+
+
+class TripleMLPImage(TripleMLP):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        super(TripleMLPImage, self).__init__(hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        self._make_mlp_and_final(2048*2)
+
+    def forward(self, triples, labels, featws, featps):
+        inp = self._get_embeddings(triples)
+        inp = torch.cat([inp, torch.tensor(featws).to(self.device), torch.tensor(featps).to(self.device)], 1)
+        #the rest
+        logits = self.MLP(inp)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
+        if self.loss_fn == 'cross_entropy':
+            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
+        elif self.loss_fn == 'mse':
+            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        elif self.loss_fn == 'smooth_l1':
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        return pred, loss
+
+class TripleMLPImageAdd(BaseModel):
+    def __init__(self, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
+        super(TripleMLPImageAdd, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
+        seq = []
+        if self.num_layers > 0:
+            #first hidden layer
+            if self.comb == 'concat':
+                self.layer1 = nn.Linear(self.embed_size*len(self.words), self.hidden_size)
+            else:
+                self.layer1 = nn.Linear(self.embed_size, self.hidden_size)
+            self.vis_layer = nn.Linear(2048*2, self.hidden_size)
+
+            #more hidden layers
+            for _ in range(self.num_layers-1):
+                seq.append(nn.Linear(self.hidden_size, self.hidden_size))
+                seq = self._add_nonlinearity(seq)
+                seq.append(nn.Dropout(p=self.dropout))
+        else:
+            raise ValueError("must have num_layers >= 1 with TripleMLPImageAdd model")
+
+        #output
+        if self.loss_fn == 'cross_entropy':
+            out_dim = 2 if self.binary else 5
+        elif self.loss_fn in ['mse', 'smooth_l1']:
+            out_dim = 1
+        self.MLP = nn.Sequential(*seq)
+        final_input = self.hidden_size
+        self.final = nn.Linear(final_input, out_dim)
+    
+    def forward(self, triples, labels, featws, featps):
+        #embeddings
+        inp = self._get_embeddings(triples)
+        vis = torch.cat([torch.tensor(featws).to(self.device), torch.tensor(featps).to(self.device)], 1)
+
+        #first layer, then combine by adding
+        inp = F.relu(self.layer1(inp))
+        vis = F.relu(self.vis_layer(vis))
+        inp = inp + vis
+
+        #the rest
+        logits = self.MLP(inp)
+        if self.bbox and bbox_fs is not None:
+            logits = torch.cat([logits, torch.Tensor(bbox_fs)], 1)
+        pred = self.final(logits)
+        if self.loss_fn == 'cross_entropy':
+            loss = F.cross_entropy(pred, torch.LongTensor(labels).to(self.device))
+        elif self.loss_fn == 'mse':
+            loss = F.mse_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        elif self.loss_fn == 'smooth_l1':
+            loss = F.smooth_l1_loss(pred.squeeze(), torch.Tensor(labels).to(self.device))
+        return pred, loss
+
+    def _get_embeddings(self, triples):
+        inp = []
+        for triple in triples:
+            if self.trip_embeds:
+                inp.append(self.trip2vec[tuple(triple)])
+            else:
+                if self.update_embed:
+                    idxs = []
+                    for comp in triple:
+                        for c in comp.split():
+                            idxs.append(self.word2ix[c] if c in self.word2ix else len(self.word2ix))
+                    embeds = self.embed(torch.LongTensor(idxs).to(self.device))
+                else:
+                    embeds = []
+                    for comp in triple:
+                        for c in comp.split():
+                            if c in self.word2vec:
+                                embeds.append(torch.Tensor(self.word2vec[c]).squeeze().to(self.device))
+                            else:
+                                embeds.append(torch.Tensor(self.word2vec['UNK']).squeeze().to(self.device))
+
+                #combine multi word wholes or parts
+                if ' ' in triple[0] or ' ' in triple[1]:
+                    embeds = self._combine_embeds(triple, embeds)
+                    if self.comb == 'concat':
+                        inp.append(torch.cat(embeds))
+                    elif self.comb == 'add':
+                        inp.append(sum(embeds))
+                    elif self.comb == 'mult':
+                        inp.append(embeds[0] * embeds[1] * embeds[2])
+                else:
+                    if type(embeds) is list:
+                        if self.comb == 'concat':
+                            embeds = torch.cat(embeds)
+                        elif self.comb == 'add':
+                            embeds = sum(embeds)
+                        elif self.comb == 'mult':
+                            embeds = embeds[0] * embeds[1] * embeds[2]
+                    else:
+                        embeds = embeds.view(-1)
+                    inp.append(embeds)
+        inp = torch.stack(inp)
+        inp = F.dropout(inp, p=self.dropout)
+        return inp
+
+    def _combine_embeds(self, triple, embeds):
+        #just some hard coding...
+        comb_embeds = []
+        if ' ' in triple[0]:
+            comb_embeds.append((embeds[0]+embeds[1])/2)
+            if ' 'in triple[1]:
+                #this doesn't happen :)
+                pass
+            comb_embeds.extend(embeds[2:])
+        elif ' ' in triple[1]:
+            comb_embeds.append(embeds[0])
+            comb_embeds.append((embeds[1]+embeds[2])/2)
+            if len(embeds) > 3:
+                comb_embeds.append(embeds[3])
+        else:
+            comb_embeds = embeds
+        return comb_embeds
+
 
 
