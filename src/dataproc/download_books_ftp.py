@@ -8,20 +8,20 @@ def crawl(dr, n_bks):
     print(dr)
     path_digits = dr.split('/')[1:]
     #skip previously scraped books
-    if path_digits[0] < '3':
-        return n_bks
-    elif path_digits[0] == '3':
-        if len(path_digits) > 1:
-            if path_digits[1] < '0':
-                return n_bks
-            elif path_digits[1] == '0':
-                if len(path_digits) > 2:
-                    if path_digits[2] < '6':
-                        return n_bks
-                    elif path_digits[2] == '6':
-                        if len(path_digits) > 3:
-                            if path_digits[3] <= '3':
-                                return n_bks
+    #if path_digits[0] < '3':
+    #    return n_bks
+    #elif path_digits[0] == '3':
+    #    if len(path_digits) > 1:
+    #        if path_digits[1] < '0':
+    #            return n_bks
+    #        elif path_digits[1] == '0':
+    #            if len(path_digits) > 2:
+    #                if path_digits[2] < '6':
+    #                    return n_bks
+    #                elif path_digits[2] == '6':
+    #                    if len(path_digits) > 3:
+    #                        if path_digits[3] <= '3':
+    #                            return n_bks
 
     subdirs = ftp.nlst(dr)
     for sd in subdirs:

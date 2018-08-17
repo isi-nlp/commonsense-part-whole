@@ -145,6 +145,25 @@ class BaseModel(nn.Module):
         inp = F.dropout(inp, p=self.dropout)
         return inp
 
+    def _combine_embeds(self, triple, embeds):
+        #just some hard coding...
+        comb_embeds = []
+        if ' ' in triple[0]:
+            comb_embeds.append((embeds[0]+embeds[1])/2)
+            if ' 'in triple[1]:
+                #this doesn't happen :)
+                pass
+            comb_embeds.extend(embeds[2:])
+        elif ' ' in triple[1]:
+            comb_embeds.append(embeds[0])
+            comb_embeds.append((embeds[1]+embeds[2])/2)
+            if len(embeds) > 3:
+                comb_embeds.append(embeds[3])
+        else:
+            comb_embeds = embeds
+        return comb_embeds
+
+
 class DefEncoder(BaseModel):
     def __init__(self, hidden_size, bidirectional, lstm_layers, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         super(DefEncoder, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)
@@ -334,25 +353,7 @@ class TripleMLP(BaseModel):
         inp = F.dropout(inp, p=self.dropout)
         return inp
 
-    def _combine_embeds(self, triple, embeds):
-        #just some hard coding...
-        comb_embeds = []
-        if ' ' in triple[0]:
-            comb_embeds.append((embeds[0]+embeds[1])/2)
-            if ' 'in triple[1]:
-                #this doesn't happen :)
-                pass
-            comb_embeds.extend(embeds[2:])
-        elif ' ' in triple[1]:
-            comb_embeds.append(embeds[0])
-            comb_embeds.append((embeds[1]+embeds[2])/2)
-            if len(embeds) > 3:
-                comb_embeds.append(embeds[3])
-        else:
-            comb_embeds = embeds
-        return comb_embeds
-
-
+    
 class PartWholeInteract(TripleMLP):
     def __init__(self, hidden_size, num_layers, kernel_size, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox):
         super(PartWholeInteract, self).__init__(True, hidden_size, num_layers, nonlinearity, dropout, word2ix, binary, embed_file, embed_type, loss_fn, gpu, update_embed, only_use, comb, bbox)

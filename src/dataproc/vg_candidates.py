@@ -42,7 +42,7 @@ if __name__ == "__main__":
     lem = WordNetLemmatizer()
 
     BboxInfo = namedtuple('BboxInfo', ['id', 'px', 'py', 'pw', 'ph', 'wx', 'wy', 'ww', 'wh'])
-    with open('../../data/nouns/vg_min_3_wat.tsv', 'w') as of:
+    with open('../../data/nouns/vg_candidates.tsv', 'w') as of:
         w = csv.writer(of, delimiter='\t')
         w.writerow(['subject', 'object', 'num_whole', 'num_part', 'num_pw', 'img1', 'img2', 'img3'])
         #how many total instances of subj has obj

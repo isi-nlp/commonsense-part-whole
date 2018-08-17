@@ -115,18 +115,3 @@ with open(args.out_file, 'w') as of:
                                             found_color = True
                                     else:
                                         w.writerow([whole, part, jj])
-
-#put jjs in vg_imgs directories
-#for whole in wholes:
-#    #take top five adjectives from n-grams
-#    jjs = list(noun2jjs[whole])[:5]
-#    #optionally take top five adjectives from VG as well
-#    if whole in noun2jjs_vg:
-#        jjs.extend(list(noun2jjs_vg[whole])[:5])
-#    for jj in jjs:
-#        for part in whole2parts[whole]:
-#            #optionally filter to adjectives that have been applied to the part as well
-#            if part in noun2jjs and jj in noun2jjs[part]:
-#                pw = '_'.join([whole, part])
-#                with open('../../data/nouns/vg_imgs/%s/jjs.csv' % pw, 'a') as of:
-#                    of.write(','.join([whole, part, jj]) + '\n')

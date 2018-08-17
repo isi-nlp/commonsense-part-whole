@@ -97,7 +97,6 @@ if __name__ == "__main__":
                             to_write.append(res)
                             to_write.append(worker_id)
                         w.writerow(to_write)
-                    print()
 
                     for (part, whole), worker_comments in comments.items():
                         for worker, comment in worker_comments:
