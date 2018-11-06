@@ -271,6 +271,8 @@ if __name__ == "__main__":
         # EARLY STOPPING
         if utils.early_stop(metrics_dv, args.criterion, args.patience):
             print("early stopping point hit")
+            if dont_train:
+                break
             #reload best model
             if args.model == 'MLP':
                 model = models.TripleMLP(args.hidden_size, args.num_layers, args.nonlinearity, args.dropout, word2ix, args.binary, args.embed_file, args.embed_type, args.loss_fn, args.gpu, args.update_embed, args.only_use, args.comb, args.bbox_feats)
