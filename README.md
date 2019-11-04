@@ -1,8 +1,9 @@
 # commonsense-part-whole
-Building a dataset of part-whole relations, inferring the relationship between adjectives and the whole/part
+Dataset for the [EMNLP 2019 paper](https://www.aclweb.org/anthology/D19-1625.pdf) 
+```Do Nuclear Submarines Have Nuclear Captains? A Challenge Dataset for Commonsense Reasoning over Adjectives and Objects```
+```James Mullenbach, Jonathan Gordon, Nanyun Peng and Jonathan May```
 
-Check src/dataproc/README.md for instructions on preparing the datasets from scratch
+The dataset consists of part-whole relations along with an adjective describing the whole. The task is to infer the relationship between the adjectives and the parts.
 
-Embedding-based model training is in src/learn
-
-RTE models are in lib/DIIN and lib/transformer-lm-pytorch
+- `data/` contains the dataset in lexical format (i.e. just the whole, part, and adjective words), and in NLI format (with retrieved premises and templated hypotheses).
+- `mturk/` contains the prompt templates and scripts used to create the AMT tasks.
